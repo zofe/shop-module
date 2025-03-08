@@ -1,0 +1,53 @@
+<div>
+
+    <div class="bg-light p-2 rounded border">
+        <h5>Cart</h5>
+
+        @if(Cart::count())
+
+
+
+            <div class="small">
+                @foreach(Cart::content() as $item)
+                    <div>
+                        <small>{{$item->qty}} {{ $item->name }} </small>
+                    </div>
+                @endforeach
+            </div>
+
+
+            <div class="h4 pt-1">
+                <a class="btn btn-sm btn-primary w-50 ms-auto d-block" href="{{ route_lang('shop.cart') }}">go to cart</a>
+            </div>
+        @else
+            <p class="text-muted">Your cart is empty.</p>
+        @endif
+
+    </div>
+
+
+{{--    <h5>{{ $isHome ? 'Categories' : 'Subcategories' }}</h5>--}}
+
+    @if(count($categories))
+        <div class="my-3">
+
+            <ul class="list-group">
+                @foreach($categories as $child)
+                    <li class="list-group-item">
+                        <a class="text-decoration-none d-block" href="{{ route('shop.list', $child->full_path) }}">{{ $child->name }}</a>
+                    </li>
+                @endforeach
+            </ul>
+
+
+        </div>
+    @elseif($category->parent)
+        {{ $category->parent }}
+
+    @else
+
+    @endif
+
+
+</div>
+
