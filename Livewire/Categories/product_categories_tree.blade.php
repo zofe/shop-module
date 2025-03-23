@@ -27,11 +27,11 @@
                 <li class="list-group-item mb-3" data-id="{{ $category->id }}">
 
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="h5"><i class="fa-solid fa-grip-vertical text-gray-600"></i> {{ $category->name }}</div>
+                        <div class="h5"><i class="fa-solid fa-grip-vertical"></i> {{ $category->name }}</div>
 
                         <div class="btn-group">
-                            <x-rpd::icon name="plus-square" color="gray-600" click="$dispatch('addCategory',{parentId: {{$category->id}}})" />
-                            <x-rpd::icon name="trash-alt" color="gray-600" click="$dispatch('removeCategory',{categoryId: {{$category->id}}})" confirm="delete category {{ $category->name }}?"  />
+                            <x-rpd::icon name="plus-square" color="text-secondary" click="$dispatch('addCategory',{parentId: {{$category->id}}})" />
+                            <x-rpd::icon name="trash-alt" color="text-secondary" click="$dispatch('removeCategory',{categoryId: {{$category->id}}})" confirm="delete category {{ $category->name }}?"  />
                         </div>
 
                     </div>

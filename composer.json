@@ -20,13 +20,13 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\Modules\\Shop\\": "./",
-            "App\\Modules\\Shop\\Database\\Factories\\": "database/factories"
+            "App\\Modules\\Search\\": "./",
+            "App\\Modules\\Search\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\Modules\\Shop\\Tests\\": "tests"
+            "App\\Modules\\Search\\Tests\\": "tests"
         }
     },
     "scripts": {

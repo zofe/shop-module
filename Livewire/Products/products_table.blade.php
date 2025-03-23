@@ -20,6 +20,7 @@
                 <th>
                     <x-rpd::sort model="id" label="id" />
                 </th>
+                <th>type</th>
                 <th>name</th>
                 <th>sku</th>
                 <th>category</th>
@@ -33,6 +34,7 @@
                     <td>
                         <a href="{{ route_lang('products.edit', $product->id ) }}">{{ $product->id }}</a>
                     </td>
+                    <td>{{ $product->type }}</td>
                     <td>{{ $product->name }}</td>
                     <td>{{ $product->sku }} </td>
                     <td>{{ optional($product->category)->name }}</td>

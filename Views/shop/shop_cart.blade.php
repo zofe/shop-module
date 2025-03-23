@@ -2,9 +2,9 @@
 
     <div class="row g-4">
 
-        <div class="col-md-3">
+        <div class="col-md-4">
 
-            <div class="bg-light p-2 rounded border">
+            <div class="p-2 card">
 
                 <h5>Finalize Order</h5>
 
@@ -37,7 +37,7 @@
 
 
 
-        <div class="col-md-9">
+        <div class="col-md-8">
 
             <div class="row">
                 <ol class="breadcrumb mb-3">
@@ -118,10 +118,10 @@
                 </x-rpd::table>
 
 
-                @if(auth()->user() && (auth()->user()->addresses->count() || auth()->user()->company->addresses->count()))
+                @if(Cart::content()->count() && auth()->user() && auth()->user()->hasAnyAddresses())
 
                     <div class="text-center">
-                        <a class="btn btn-primary my-2" href="#">make order</a>
+                        <a class="btn btn-primary my-2"  wire:click.prevent="makeOrder">Make Order</a>
                     </div>
                 @endif
 

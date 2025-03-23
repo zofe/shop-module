@@ -9,19 +9,16 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
         </x-slot>
 
         <div class="row">
-
-            <div class="col-md-6">
-                <x-rpd::input model="product.name" label="Name" />
-                <x-rpd::input model="product.description" label="Description" />
-            </div>
-            <div class="col-md-6">
-                <x-rpd::input model="product.sku" label="Sku" />
-                <x-rpd::select-list model="product.category_id" :options="$availableCategories" label="Category" />
-            </div>
-
-
+            <x-rpd::select col="col-md-4" model="product.type" label="Type" :options="$types"  addempty  />
+            <x-rpd::select-list col="col-md-4" model="product.category_id" :options="$availableCategories" label="Category" />
+            <x-rpd::input col="col-md-4" model="product.sku" label="Sku" />
 
         </div>
+        <div class="row">
+            <x-rpd::input col="col-md-12" model="product.name" label="Name" />
+            <x-rpd::rich-text col="col-md-12 mt-2" model="product.description" label="Description" />
+        </div>
+
 
         <x-slot name="actions">
             <button type="submit" class="btn btn-primary">Save</button>

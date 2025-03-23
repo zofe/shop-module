@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->enum('type', ['inventory_item','service_item']);
             $table->nullableNumericMorphs('buyable');
 
             $table->integer('category_id')->nullable();

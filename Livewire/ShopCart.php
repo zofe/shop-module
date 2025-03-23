@@ -4,6 +4,8 @@
 namespace App\Modules\Shop\Livewire;
 
 use App\Modules\Shop\CartFacade as Cart;
+
+use App\Modules\Shop\Services\OrderService;
 use Livewire\Component;
 
 use Zofe\Rapyd\Traits\WithDataTable;
@@ -14,6 +16,7 @@ class ShopCart extends Component
     use WithDataTable;
 
     public $listeners = [];
+    public $note;
 
     public function updateItem($rowId, $value)
     {
@@ -27,7 +30,12 @@ class ShopCart extends Component
 
     public function makeOrder()
     {
-        Cart::destroy();
+        $order = OrderService::createOrderFromCart($this->note, auth()->user()->id);
+        if ($order) {
+            Cart::destroy();
+            session()->flash('success', 'Order created');
+            return redirect()->route('shop.order', $order->id);
+        }
     }
 
     public function render()

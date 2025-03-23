@@ -17,11 +17,18 @@ class ProductsEdit extends Component
     public $product;
     public $availableCategories = [];
 
+    public $types = [
+        'inventory_item' => 'Inventory Item',
+        'service_item' => 'Service Item',
+    ];
+
+    
     protected $rules = [
+        'product.type' => 'required',
         'product.name' => 'required|unique:products,name',
         'product.description' => 'nullable|unique:companies,email',
         'product.sku' => 'required|unique:products,sku',
-        'product.category_id' => 'nullable',
+        'product.category_id' => 'required',
     ];
 
     public function booted()

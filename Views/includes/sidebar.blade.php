@@ -1,6 +1,6 @@
 <div>
 
-    <div class="bg-light p-2 rounded border">
+    <div class="p-2 p-2 card">
         <h5>Cart</h5>
 
         @if(Cart::count())

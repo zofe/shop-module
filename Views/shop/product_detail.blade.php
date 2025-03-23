@@ -2,6 +2,9 @@
 <div>
     <h3>{{ $price->product->name }}</h3>
 
+    <p>{!! $price->product->description !!} </p>
+
+
     <div>{{ $price->price_onetime_customer }} {{ Cart::currency() }}</div>
 
     <div class="mt-2">

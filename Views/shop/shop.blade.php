@@ -3,13 +3,13 @@
 
     <div class="row g-4">
 
-        <div class="col-md-3">
+        <div class="col-md-4">
 
             @include('shop::includes.sidebar')
 
         </div>
 
-        <div class="col-md-9">
+        <div class="col-md-8">
 
             @include('shop::includes.breadcrumb')
 

@@ -68,6 +68,10 @@ Route::get('/orders/table', \App\Modules\Shop\Livewire\Orders\OrdersTable::class
     ->name('orders.table')
     ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Orders', route('orders.table')));
 
+Route::get('/orders/view/{order}', \App\Modules\Shop\Livewire\Orders\OrdersView::class)
+    ->middleware(['web'])
+    ->name('orders.view')
+    ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.table')->push('Order', route('orders.view', $order)));
 
 
 Route::get('/inventory-items/table', \App\Modules\Shop\Livewire\Items\InventoryItemsTable::class)
