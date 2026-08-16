@@ -28,16 +28,16 @@
 
         </div>
 
-        <livewire:shop::prices-price-lists-modal-edit-embed />
+        <livewire:shop::prices.price-lists-modal-edit-embed />
 
 
         <div>
-            <livewire:shop::prices-price-lists-item-edit-embed  :key="'new'" />
+            <livewire:shop::prices.price-lists-item-edit-embed  :key="'new'" />
         </div>
 
         <div class="border-bottom-except-last">
             @foreach($priceList->items as $item)
-                <livewire:shop::prices-price-lists-item-edit-embed :priceListItem="$item" :key="$item->id" />
+                <livewire:shop::prices.price-lists-item-edit-embed :priceListItem="$item" :key="$item->id" />
             @endforeach
         </div>
 
