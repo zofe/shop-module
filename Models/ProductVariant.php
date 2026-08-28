@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductVariant extends Model
 {
+    protected $fillable = [
+        'product_id', 'name', 'sku', 'price', 'metadata',
+    ];
+
     protected $casts = [
         'metadata' => 'array',
     ];
