@@ -4,20 +4,14 @@ namespace App\Modules\Shop\Livewire\Prices;
 
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\PriceList;
+use Livewire\Attributes\On;
 use Livewire\Component;
-
-
 
 class PriceListsModalEditEmbed extends Component
 {
     use Authorize;
 
     public $priceList;
-
-    protected $listeners = [
-        'editPriceList' => 'editPriceList',
-        'deletePriceList' => 'deletePriceList'
-    ];
 
     protected $rules = [
         'priceList.name' => 'required',
@@ -31,6 +25,7 @@ class PriceListsModalEditEmbed extends Component
         $this->authorize('admin|edit price lists');
     }
 
+    #[On('editPriceList')]
     public function editPriceList($priceListId = null)
     {
         if ($priceListId) {
@@ -57,6 +52,7 @@ class PriceListsModalEditEmbed extends Component
         $this->dispatch('savedPriceList');
     }
 
+    #[On('deletePriceList')]
     public function deletePriceList($priceListId)
     {
         $this->priceList = PriceList::findOrfail($priceListId);

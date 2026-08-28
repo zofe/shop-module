@@ -6,9 +6,8 @@ use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\PriceList;
 use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Product;
+use Livewire\Attributes\On;
 use Livewire\Component;
-
-
 
 class PriceListsItemEditEmbed extends Component
 {
@@ -17,14 +16,7 @@ class PriceListsItemEditEmbed extends Component
     public $item;
     public $action = 'none';
     public $products = [];
-
-
-    protected $listeners = [
-        'editPriceListItem' => 'editPriceListItem',
-        'deletePriceListItem' => 'deletePriceListItem',
-        'addPriceListItem' => 'addPriceListItem',
-        'toggle' => 'toggle',
-    ];
+    public $metadata = [];
 
     protected $rules = [
         'item.product_id' => 'required',
@@ -32,6 +24,8 @@ class PriceListsItemEditEmbed extends Component
         'item.price_onetime_customer' => 'required',
         'item.price_monthly_customer' => 'nullable',
         'item.price_yearly_customer' => 'nullable',
+        'metadata'    => 'nullable|array',
+        'metadata.*'  => 'nullable|string',
     ];
 
     public function booted()
@@ -42,6 +36,10 @@ class PriceListsItemEditEmbed extends Component
     public function mount(?PriceListItem $priceListItem)
     {
         $this->item = $priceListItem;
+        $this->metadata = collect($model->metadata ?? [])
+            ->map(fn($value, $key) => ['key' => $key, 'value' => $value])
+            ->values()
+            ->toArray();
         if($this->item->exists){
             $this->action = 'show';
         }
@@ -51,6 +49,11 @@ class PriceListsItemEditEmbed extends Component
     public function save()
     {
         $this->validate();
+
+        $clean = collect($this->metadata)
+            ->filter(fn($value, $key) => trim((string)$key) !== '')
+            ->toArray();
+      //  $this->item->metadata = $clean;
 
         $this->item->save();
         $this->action = 'show';
@@ -63,6 +66,7 @@ class PriceListsItemEditEmbed extends Component
         $this->dispatch('updatedPriceList');
     }
 
+    #[On('toggle')]
     public function toggle()
     {
         if($this->action == 'show' ) {
@@ -75,6 +79,7 @@ class PriceListsItemEditEmbed extends Component
         }
     }
 
+    #[On('addPriceListItem')]
     public function addPriceListItem($priceListId)
     {
         $priceList = PriceList::findOrFail($priceListId);

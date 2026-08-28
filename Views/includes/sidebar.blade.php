@@ -41,7 +41,7 @@
 
 
         </div>
-    @elseif($category->parent)
+    @elseif(optional($category)->parent)
         {{ $category->parent }}
 
     @else

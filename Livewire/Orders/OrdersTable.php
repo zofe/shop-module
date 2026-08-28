@@ -12,7 +12,12 @@ class OrdersTable extends Component
     use WithDataTable, Authorize;
 
     public $search = '';
-    public $sortField = 'id';
+
+    public function mount(): void
+    {
+        $this->sortField = 'created_at';
+        $this->sortAsc = false;
+    }
 
     public function booted()
     {

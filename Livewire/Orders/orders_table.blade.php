@@ -17,24 +17,59 @@
             <thead>
             <tr>
                 <th>
-                    <x-rpd::sort model="id" label="id" />
+                    id
                 </th>
-{{--                <th>sku</th>--}}
-{{--                <th>description</th>--}}
-{{--                <th>created_at</th>--}}
-{{--                <th>updated_at</th>--}}
+                <th>products</th>
+                <th>status</th>
+                <th>customer</th>
+                <th>subtotal</th>
+                <th><x-rpd::sort model="created_at" label="created_at" /></th>
+                <th><x-rpd::sort model="updated_at" label="updated_at" /></th>
             </tr>
             </thead>
             <tbody>
             @foreach ($items as $order)
                 <tr>
                     <td>
-                        <a href="{{ route_lang('orders.view', $order->id ) }}">{{ $order->shortId }}</a>
+                        <x-rpd::nav-link :label="$order->shortId" route="orders.view" :params="$order->id" />
                     </td>
-{{--                    <td>{{ $product->sku }} </td>--}}
-{{--                    <td>{{ $product->description }}</td>--}}
-{{--                    <td>{{ $product->created_at }}</td>--}}
-{{--                    <td>{{ $product->updated_at }}</td>--}}
+                    <td>
+                         @foreach ($order->items->sortByDesc('deliverable_type') as $itm)
+                            @if($itm->deliverable_type)
+                                <span class="badge bg-primary position-relative">
+                                    {{ $itm->name }}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info"> {{ round($itm->qty) }}</span>
+                                </span>
+                            @else
+                                <span class="small">
+                                    {{ Str::limit( $itm->name, '10') }}
+                                </span>
+                            @endif
+
+                         @endforeach
+                    </td>
+                    <td>
+                        {{ $order->status }}
+                    </td>
+                    <td>
+                        @if($order->company)
+                            {{ $order->company->name }}
+                        @elseif($order->user)
+                            {{ $order->user->name }}
+                        @endif
+                    </td>
+                    <td class="text-end">
+                        {{ $order->subtotal }} {{ Cart::currency() }}
+                    </td>
+                    <td class="small">
+                        <x-rpd::date-formatted :date="$order->created_at"></x-rpd::date-formatted>
+                    </td>
+                    <td>
+                        <x-rpd::date-formatted :date="$order->updated_at"></x-rpd::date-formatted>
+                    </td>
+                    <td>
+                        <x-rpd::icon name="edit" route="orders.view" :params="$order->id" />
+                    </td>
                 </tr>
             @endforeach
             </tbody>

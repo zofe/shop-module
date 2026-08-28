@@ -9,7 +9,9 @@ $title = $item->exists ? 'Update Inventory Item' : 'Create Inventory Item';
         </x-slot>
 
         <div class="row">
-            <x-rpd::input col="col-md-4" model="item.serial_number" label="Name" />
+            <x-rpd::input col="col-md-4" model="item.serial_number" label="Serial Number" />
+
+            <x-rpd::select-list col="col-md-4" model="item.product_id" :options="$products" label="product" placeholder="Product..." />
         </div>
 
         <x-slot name="actions">

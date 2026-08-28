@@ -5,6 +5,7 @@ namespace App\Modules\Shop\Livewire\Prices;
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\PriceList;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Zofe\Rapyd\Traits\WithDataTable;
 
@@ -13,9 +14,14 @@ class PriceListsTable extends Component
     use WithDataTable, Authorize;
 
     public $search = '';
-    public $sortField = 'id';
 
-    protected $listeners = ['savedPriceList' => '$refresh'];
+    #[On('savedPriceList')]
+    public function handleSavedPriceList(): void {}
+
+    public function mount(): void
+    {
+        $this->sortField = 'id';
+    }
 
     public function booted()
     {

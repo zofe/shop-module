@@ -18,7 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
 
             $table->string('status')->default('in_stock');
+
             $table->string('serial_number')->unique()->nullable();
+            $table->decimal('qty', 10, 2)->default(0);
 
             $table->nullableMorphs('owner');
 

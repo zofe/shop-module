@@ -34,7 +34,7 @@ class ShopCart extends Component
         if ($order) {
             Cart::destroy();
             session()->flash('success', 'Order created');
-            return redirect()->route('shop.order', $order->id);
+            return redirect()->route('shop.orders');//, $order->id);
         }
     }
 

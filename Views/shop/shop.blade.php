@@ -11,9 +11,9 @@
 
         <div class="col-md-8">
 
-            @include('shop::includes.breadcrumb')
-
-
+            <div wire:ignore>
+                <x-rpd::breadcrumbs class="breadcrumb-item" active="active" />
+            </div>
 
         @if($price)
 

@@ -4,6 +4,7 @@ namespace App\Modules\Shop\Livewire\Items;
 
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\InventoryItem;
+use App\Modules\Shop\Models\Product;
 use Livewire\Component;
 
 
@@ -13,9 +14,10 @@ class InventoryItemsEdit extends Component
     use Authorize;
 
     public $item;
+    public $products = [];
 
     protected $rules = [
-        'item.serial_number' => 'required|unique:inventory_items,name',
+        'item.serial_number' => 'required|unique:inventory_items,serial_number',
         'item.product_id' => 'required',
     ];
 
@@ -27,17 +29,18 @@ class InventoryItemsEdit extends Component
     public function mount(?InventoryItem $item)
     {
        $this->item = $item;
+       $this->products = Product::orderBy('name')->pluck('name', 'id')->toArray();
     }
 
     public function save()
     {
         if($this->item->exists) {
-            $this->rules['item.serial_number'] = 'required|unique:inventory_items,name,'.$this->item->id;
+            $this->rules['item.serial_number'] = 'required|unique:inventory_items,serial_number,'.$this->item->id;
         }
 
         $this->validate();
         $this->item->save();
-        return redirect()->to(route_lang("items.table"));
+        return redirect()->to(route_lang("inventory_items.table"));
     }
 
     public function render()

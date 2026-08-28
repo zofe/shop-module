@@ -1,22 +1,58 @@
 <?php
 
-use App\Modules\Shop\Livewire\ShopCart;
 use Illuminate\Support\Facades\Route;
-use App\Modules\Shop\Livewire\Shop;
+
 
 //frontend
-Route::get('shop/{slugs?}', Shop::class)
+Route::get('shop/{slugs?}', \App\Modules\Shop\Livewire\Shop::class)
     ->where('slugs', '.*')
     ->middleware(['web'])
     ->name('shop.list')
-    ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Shop', route_lang('shop.list')));
+    ->crumbs(function ($crumbs, $slugs = null) {
+
+        [$price, $category, $categories] = \App\Modules\Shop\Services\ShopService::getContextBySlugs($slugs);
+
+        $path = [];
+        $current = $category;
+        while ($current) {
+            $path[] = $current;
+            $current = $current->parent;
+        }
+        $path = array_reverse($path);
+
+        $crumbs->parent('home');
+        $crumbs->push('Shop', route('shop.list'));
+
+        foreach ($path as $cat) {
+            $crumbs->push($cat->name, route_lang('shop.list', ['slugs' => $cat->full_path]));
+        }
+
+        if ($price) {
+            $crumbs->push($price->product->name, route_lang('shop.list', ['slugs' => $price->product->slug]));
+        }
+
+
+    })
 ;
 
-Route::get('shop-cart', ShopCart::class)
+Route::get('/shop-cart', \App\Modules\Shop\Livewire\ShopCart::class)
     ->middleware(['web'])
     ->name('shop.cart')
-    ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Shop Cart', route_lang('shop.cart')));
+    ->crumbs(fn ($crumbs) => $crumbs->parent('shop.list')->push('Shop Cart', route_lang('shop.cart')));
 ;
+
+Route::get('/shop-orders', \App\Modules\Shop\Livewire\ShopOrders::class)
+    ->middleware(['web'])
+    ->name('shop.orders')
+    ->crumbs(fn ($crumbs) => $crumbs->parent('shop.list')->push('Shop Orders', route_lang('shop.orders')));
+;
+
+Route::get('/shop-order/{order}', \App\Modules\Shop\Livewire\ShopOrder::class)
+    ->middleware(['web'])
+    ->name('shop.order')
+    ->crumbs(function ($crumbs, $order) {
+        $crumbs->parent('shop.orders')->push('Order Detail', route('shop.order', $order));
+    });
 
 
 //admin
@@ -31,6 +67,12 @@ Route::get('/products/table', \App\Modules\Shop\Livewire\Products\ProductsTable:
     ->name('products.table')
     ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Products & Services', route('products.table')));
 
+Route::get('/products/view/{product}', \App\Modules\Shop\Livewire\Products\ProductsView::class)
+    ->middleware(['web'])
+    ->name('products.view')
+    ->crumbs(function ($crumbs, $product) {
+        $crumbs->parent('products.table')->push('Product Detail', route('products.view', $product));
+    });
 
 Route::get('/products/edit/{product?}', \App\Modules\Shop\Livewire\Products\ProductsEdit::class)
     ->middleware(['web'])
@@ -71,7 +113,12 @@ Route::get('/orders/table', \App\Modules\Shop\Livewire\Orders\OrdersTable::class
 Route::get('/orders/view/{order}', \App\Modules\Shop\Livewire\Orders\OrdersView::class)
     ->middleware(['web'])
     ->name('orders.view')
-    ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.table')->push('Order', route('orders.view', $order)));
+    ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.table')->push('Order Detail', route('orders.view', $order)));
+
+Route::get('/subscriptions/table', \App\Modules\Shop\Livewire\Subscriptions\SubscriptionsTable::class)
+    ->middleware(['web'])
+    ->name('subscriptions.table')
+    ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Subscriptions', route('subscriptions.table')));
 
 
 Route::get('/inventory-items/table', \App\Modules\Shop\Livewire\Items\InventoryItemsTable::class)
@@ -99,3 +146,13 @@ Route::get('/service-items/edit/{item?}', \App\Modules\Shop\Livewire\Items\Servi
     ->crumbs(function ($crumbs, $item=null) {
         $crumbs->parent('products.table')->push('Edit Service Item', route('service_items.edit'));
     });
+
+Route::get('/ajax/available-pricelist-item', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'ajax_available_pricelist_items'])
+    ->middleware(['web'])
+    ->name('ajax.available_pricelist_items');
+
+//Route::get('/ajax/available-pricelist-item', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'ajax_available_product_items'])
+//    ->middleware(['web'])
+//    ->name('ajax.available_pricelist_items');
+//
+//

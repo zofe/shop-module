@@ -4,7 +4,7 @@
         <x-slot name="buttons">
             <x-rpd::icon name="plus-square" color="gray-600" click="$dispatch('addCategory')" />
 {{--            <x-rpd::dropdown label="Add Category" color="outline-primary" action="addCategory" >--}}
-{{--                <x-rpd::input col="col-md-12" wire:model="newcategory.name" label="Name" />--}}
+{{--                <x-rpd::input col="col-md-12" model="newcategory.name" label="Name" />--}}
 {{--            </x-rpd::dropdown>--}}
         </x-slot>
 
@@ -17,7 +17,7 @@
                 @if($newcategory->parent_id)
                     <h5>as subcategory of {{ $newcategory->parent_id }}</h5>
                 @endif
-                <x-rpd::input col="col-md-12" wire:model="newcategory.name" label="Name" />
+                <x-rpd::input col="col-md-12" model="newcategory.name" label="Name" />
             </div>
         </x-rpd::modal>
 

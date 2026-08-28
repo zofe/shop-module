@@ -75,4 +75,9 @@ return [
 
     'currency' => '€',
 
+    'deliverable_types' => [
+        'inventory_item' => App\Modules\Shop\Models\InventoryItem::class,
+        'service_item'   => App\Modules\Shop\Models\ServiceItem::class,
+    ],
+
 ];

@@ -4,9 +4,8 @@ namespace App\Modules\Shop\Livewire\Prices;
 
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\PriceList;
+use Livewire\Attributes\On;
 use Livewire\Component;
-
-
 
 class PriceListsView extends Component
 {
@@ -14,12 +13,13 @@ class PriceListsView extends Component
 
     public $priceList;
 
-    protected $listeners = ['updatedPriceList' => '$refresh'];
-
     public function booted()
     {
         $this->authorize('admin|edit prices|view prices');
     }
+
+    #[On('updatedPriceList')]
+    public function handleUpdatedPriceList(): void {}
 
     public function mount(PriceList $priceList)
     {

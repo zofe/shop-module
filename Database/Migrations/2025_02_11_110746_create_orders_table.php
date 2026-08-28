@@ -21,6 +21,9 @@ return new class extends Migration
             $table->uuid('user_id')->nullable();
             $table->uuid('company_id')->nullable();
 
+            $table->json('customer_data')->nullable();
+            $table->json('shipping_address')->nullable();
+
             $table->decimal('discount', 10, 2);
             $table->decimal('subtotal', 10, 2);
             $table->decimal('tax', 10, 2);

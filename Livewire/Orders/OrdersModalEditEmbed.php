@@ -26,11 +26,6 @@ class OrdersModalEditEmbed extends Component
     public $prd_code;
     public $name;
 
-    protected $listeners = [
-        'editItem' => 'editItem',
-        'deleteItem' => 'deleteItem'
-    ];
-
     protected $rules = [
         'new_item'  => 'nullable',
         'price'     => 'required|numeric',
@@ -59,6 +54,7 @@ class OrdersModalEditEmbed extends Component
         $this->order = $order;
     }
 
+    #[On('editItem')]
     #[On('editOrderItem')]
     public function editItem($itemId = null)
     {

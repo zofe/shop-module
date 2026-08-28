@@ -32,14 +32,21 @@
             @foreach ($items as $item)
                 <tr>
                     <td>
-                        <a href="{{ route_lang('inventory_items.edit', $item->id ) }}">{{ $item->id }}</a>
+                        <x-rpd::nav-link :label="$item->shortId" route="inventory_items.edit" :params="$item->id" />
                     </td>
                     <td>{{ $item->serial_number }} </td>
-                    <td>{{ $item->product->name }}</td>
+                    <td>{{ optional($item->product)->name }}</td>
                     <td>{{ $item->status }} </td>
                     <td>{{ optional($item->owner)->name }}</td>
-                    <td>{{ $item->created_at }}</td>
-                    <td>{{ $item->updated_at }}</td>
+                    <td class="small">
+                        <x-rpd::date-formatted :date="$item->created_at"></x-rpd::date-formatted>
+                    </td>
+                    <td>
+                        <x-rpd::date-formatted :date="$item->updated_at"></x-rpd::date-formatted>
+                    </td>
+                    <td>
+                        <x-rpd::icon name="edit" route="inventory_items.edit" :params="$item->id" />
+                    </td>
                 </tr>
             @endforeach
             </tbody>

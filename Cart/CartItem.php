@@ -3,6 +3,7 @@
 namespace App\Modules\Shop\Cart;
 
 use App\Modules\Shop\Cart\Contracts\Buyable;
+use App\Modules\Shop\Cart\Contracts\BuyableItem;
 use App\Modules\Shop\Cart\Contracts\Calculator;
 use App\Modules\Shop\Cart\Exceptions\InvalidCalculatorException;
 
@@ -33,7 +34,7 @@ use ReflectionClass;
  * @property-read float total
  * @property-read float priceTax
  */
-class CartItem implements Arrayable, Jsonable
+class CartItem implements Arrayable, Jsonable, BuyableItem
 {
     /**
      * The rowID of the cart item.
@@ -451,6 +452,11 @@ class CartItem implements Arrayable, Jsonable
         $this->taxRate = $taxRate;
 
         return $this;
+    }
+
+    public function getTaxRate()
+    {
+        return $this->taxRate;
     }
 
     /**

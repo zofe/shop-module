@@ -13,7 +13,11 @@ class ServiceItemsTable extends Component
     use WithDataTable, Authorize;
 
     public $search = '';
-    public $sortField = 'id';
+
+    public function mount(): void
+    {
+        $this->sortField = 'id';
+    }
 
     public function booted()
     {

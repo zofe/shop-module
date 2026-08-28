@@ -5,9 +5,8 @@ namespace App\Modules\Shop\Livewire\Subscriptions;
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Models\SubscriptionItem;
-#use Uania\Subscription\Services\SubscriptionService;
+use Livewire\Attributes\On;
 use Livewire\Component;
-
 
 class SubscriptionsView extends Component
 {
@@ -37,7 +36,8 @@ class SubscriptionsView extends Component
        // 'newModelType'      => 'nullable'
     ];
 
-    protected $listeners = ['refresh:item' => '$refresh'];
+    #[On('refresh:item')]
+    public function handleRefreshItem(): void {}
 
     public function booted()
     {
@@ -161,6 +161,6 @@ class SubscriptionsView extends Component
         $items = $this->subscription->items()->paginate(10);
 
 
-        return view('shop::subscriptions.subscriptions_view', ['payments'=>$this->payments, 'items'=>$items]);
+        return view('shop::subscriptions.subscriptions_view', ['payments'=>$this->payments, 'items'=>$items])->layout('shop::admin');
     }
 }

@@ -9,7 +9,9 @@ use App\Modules\Shop\CartFacade as Cart;
 use App\Modules\Shop\Models\License;
 use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\OrderItem;
+use App\Modules\Shop\Models\OrderItemAssignment;
 use App\Modules\Shop\Models\PriceList;
+use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
@@ -63,11 +65,18 @@ class OrderService
     {
         Cart::instance($cartInstance);
 
+
         /** @var CartItem $item */
         foreach (Cart::content() as $item) {
+
+
+
+            //$deliverableType = config("shop.deliverable_types.{$item->model->product->type}");
+            $deliverableType = $item->model->product->type;
             $orderItem = new OrderItem([
                 'order_id' => $order->id,
                 'price_list_item_id' => $item->id,
+                'deliverable_type' => $deliverableType,
                 'prd_code' => $item->getSku(),
                 'name' => $item->name,
                 'qty' => $item->qty,
@@ -80,79 +89,85 @@ class OrderService
             ]);
             $orderItem->save();
 
-
-//            if ($item->options && isset($item->options['item_type']) && $item->options['item_type'] == 'license') {
-//                $subtotal = $orderItem->price;
-//                $tax = round($subtotal * ($item->taxRate / 100), 2);
-//
-//                for ($i = 1; $i <= $item->qty; $i++) {
-//                    $license = new License();
-//                    $license->duration = $item->options['duration'];
-//                    $license->license_type_id = $item->options['license_type_id'];
-//
-//
-//                    $license->order_id = $order->id;
-//                    $license->order_item_id = $orderItem->id;
-//                    $license->company_id = $order->company_id;
-//                    $license->commercial_id = optional($order->company)->commercial_id;
-//                    $license->subtotal = $subtotal;
-//                    $license->tax = $tax;
-//                    $license->total = round($subtotal + $tax, 2);
-//                    $license->order_date = $order->created_at;
-//                    $license->save();
-//                }
-//            } elseif ($item->options && isset($item->options['item_type']) && in_array($item->options['item_type'], $servicesList)) {
-//                $subtotal = $orderItem->price;
-//                $tax = round($subtotal * ($item->taxRate / 100), 2);
-//
-//                for ($i = 1; $i <= $item->qty; $i++) {
-//                    $license = new ServiceLicense();
-//                    $license->service_name = $item->options['item_type'];
-//                    $license->service_type_id = @ServiceType::whereSlug($item->options['item_type'])->first()->id;
-//                    $license->duration = $item->options['duration'];
-//                    $license->box_type_id = isset($item->options['box_type_id']) ? $item->options['box_type_id'] : null;
-//                    $license->is_renew = isset($item->options['isRenew']) ? 1 : 0;
-//                    // $license->is_shield_starter = isset($item->options['isSHIELDSTARTER']) ? 1 : 0;
-//                    // $license->is_dr_starter = isset($item->options['isDRSTARTER']) ? 1 : 0;
-//                    $license->is_starter = isset($item->options['isSTARTER']) ? 1 : 0;
-//                    $license->is_shield_starter = isset($item->options['isSHIELDSTARTER']) ? 1 : 0;
-//                    $license->is_dr_starter = isset($item->options['isDRSTARTER']) ? 1 : 0;
-//
-//                    $license->order_id = $order->id;
-//                    $license->order_item_id = $orderItem->id;
-//                    $license->company_id = $order->company_id;
-//                    $license->commercial_id = optional($order->company)->commercial_id;
-//                    $license->subtotal = $subtotal;
-//                    $license->tax = $tax;
-//                    $license->total = round($subtotal + $tax, 2);
-//                    $license->order_date = $order->created_at;
-//                    $license->save();
-//                }
-//            } else {
-//                //le routerboard e i box vanno assegnati (all'ordine e al partner)
-//                $product = $orderItem->price_list_item->product;
-//                if (in_array($product->model_type, ['App\Model\Box', 'App\Model\Routerboard'])) {
-//                    for ($i = 1; $i <= $item->qty; $i++) {
-//                        $orderDevice = new OrderDevice([
-//                            'order_id' => $order->id,
-//                            'order_item_id' => $orderItem->id,
-//                            'serial_number' => null,
-//                            'model_type' => $product->model_type,
-//                            'model_type_id' => $product->model_type_id,
-//                            'is_nfr' => $orderItem->is_nfr,
-//                            'is_starter' => $orderItem->is_starter,
-//                            'is_shield_starter' => $orderItem->is_shield_starter,
-//                            'is_dr_starter' => $orderItem->is_dr_starter,
-//                        ]);
-//                        $orderDevice->save();
-//                    }
-//                }
-//            }
+            static::syncAssignments($orderItem);
         }
 
         if ($recalculate) {
             $order->recalculate();
             $order->refresh();
         }
+
+    }
+
+
+
+    public static function syncAssignments(OrderItem $orderItem): void
+    {
+        // Numero desiderato di unità
+        $desiredCount = (int) $orderItem->qty;
+
+        // Count attuale di assignments esistenti
+        $existing = $orderItem->assignments()->count();
+
+        DB::transaction(function () use ($orderItem, $desiredCount, $existing) {
+            // Aggiungi assignments mancanti
+
+            $subtotal = $orderItem->price;
+            $tax = round($subtotal * ($orderItem->taxRate / 100), 2);
+            $total =  round($subtotal + $tax, 2);
+
+
+
+            if ($desiredCount > $existing) {
+                $toAdd = $desiredCount - $existing;
+                for ($i = 0; $i < $toAdd; $i++) {
+                    $assignment = new OrderItemAssignment([
+                        'order_item_id'     => $orderItem->id,
+                        'deliverable_type'  => $orderItem->deliverable_type,
+                        'deliverable_id'    => null,
+                        'license_id'        => null,
+                        'serial_number'     => null,
+                        'metadata'          => null,
+                        'subtotal' => $subtotal,
+                        'tax' => $tax,
+                        'total' => $total,
+                        'status'            => 'pending',
+                    ]);
+                    $assignment->save();
+
+                    // Se è un servizio, genera la licenza e associa
+                    if ($orderItem->deliverable_type === \App\Models\ServiceItem::class) {
+                        $license = License::create([
+                            'service_item_id' => $orderItem->deliverable_id,
+                            'order_id'        => $orderItem->order_id,
+                            'order_item_id'   => $orderItem->id,
+                            'status'          => 'active',
+                            'activated_at'    => now(),
+                            'expires_at'      => now()->addYear(),
+                        ]);
+                        $assignment->license_id = $license->id;
+                        $assignment->save();
+                    }
+                }
+            }
+
+            // Rimuovi assignments in eccesso
+            if ($existing > $desiredCount) {
+                $toRemove = $existing - $desiredCount;
+                $assignments = $orderItem->assignments()
+                    ->oldest('id')
+                    ->take($toRemove)
+                    ->get();
+
+                foreach ($assignments as $assignment) {
+                    // Se c'è una licenza collegata, cancellala
+                    if ($assignment->license_id) {
+                        License::where('id', $assignment->license_id)->delete();
+                    }
+                    $assignment->delete();
+                }
+            }
+        });
     }
 }
+

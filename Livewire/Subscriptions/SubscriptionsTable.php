@@ -48,6 +48,6 @@ class SubscriptionsTable extends Component
     {
         $items = $this->getDataSet();
 
-        return view('shop::subscriptions.subscriptions_table', compact('items'));
+        return view('shop::subscriptions.subscriptions_table', compact('items'))->layout('shop::admin');
     }
 }

@@ -12,11 +12,15 @@ class ProductsTable extends Component
     use WithDataTable, Authorize;
 
     public $search = '';
-    public $sortField = 'id';
 
     public function booted()
     {
         $this->authorize('admin|edit products|view products');
+    }
+
+    public function mount(): void
+    {
+        $this->sortField = 'id';
     }
 
     public function getDataSet()

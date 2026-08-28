@@ -5,9 +5,9 @@ namespace App\Modules\Shop\Livewire\Products;
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Product;
 use App\Modules\Shop\Models\ProductVariant;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Zofe\Rapyd\Traits\WithDataTable;
-
 
 class ProductsVariantsTableEmbed extends Component
 {
@@ -20,12 +20,6 @@ class ProductsVariantsTableEmbed extends Component
     public $variants;
     public $variant;
     public $metadata = [];
-
-    protected $listeners = [
-        'editVariant'   => 'editVariant',
-        'savedVariant'  => 'refreshVariants',
-        'deleteVariant' => 'deleteVariant'
-    ];
 
     protected $rules = [
         'variant.product_id' => 'required',
@@ -55,11 +49,13 @@ class ProductsVariantsTableEmbed extends Component
         $this->refreshVariants();
     }
 
+    #[On('savedVariant')]
     public function refreshVariants()
     {
         $this->variants = $this->product->variants()->get();
     }
 
+    #[On('editVariant')]
     public function editVariant(ProductVariant $variant = null)
     {
         $this->variant = $variant ?: new ProductVariant;
@@ -80,6 +76,7 @@ class ProductsVariantsTableEmbed extends Component
         $this->dispatch('savedVariant');
     }
 
+    #[On('deleteVariant')]
     public function deleteVariant(ProductVariant $variant)
     {
         $variant->delete();

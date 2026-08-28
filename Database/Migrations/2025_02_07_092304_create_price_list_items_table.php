@@ -23,6 +23,8 @@ return new class extends Migration
             $table->decimal('price_yearly_customer', 10, 2)->default(0);
             $table->decimal('price_monthly_customer', 10, 2)->default(0);
 
+            $table->json('metadata')->nullable();
+
             $table->timestamps();
 
             $table->foreign('price_list_id')->references('id')->on('price_lists')->onDelete('cascade');

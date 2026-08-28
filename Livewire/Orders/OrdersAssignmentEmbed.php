@@ -23,9 +23,6 @@ class OrdersAssignmentEmbed extends Component
     protected $rules = [
     ];
 
-    protected $listeners = [
-    ];
-
     public function booted()
     {
         $this->authorize('admin|edit orders|view orders');

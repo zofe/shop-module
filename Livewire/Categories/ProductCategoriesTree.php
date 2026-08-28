@@ -5,9 +5,9 @@ namespace App\Modules\Shop\Livewire\Categories;
 use App\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\ProductCategory;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Zofe\Rapyd\Traits\WithDataTable;
-
 
 class ProductCategoriesTree extends Component
 {
@@ -25,11 +25,6 @@ class ProductCategoriesTree extends Component
         'newcategory.name' => 'required|unique:product_categories,name',
     ];
 
-    protected $listeners = [
-        'reorder' => 'reorder',
-        'addCategory'=>'addCategory',
-        'removeCategory'=>'removeCategory'];
-
     public function mount($slug=null)
     {
         $this->newcategory = new ProductCategory();
@@ -46,6 +41,7 @@ class ProductCategoriesTree extends Component
         $this->authorize('admin|view categories');
     }
 
+    #[On('addCategory')]
     public function addCategory($parentId = null)
     {
         $this->newcategory->parent_id = $parentId;
@@ -66,6 +62,7 @@ class ProductCategoriesTree extends Component
         $this->dispatch('hide-modals');
     }
 
+    #[On('removeCategory')]
     public function removeCategory($categoryId)
     {
         ProductCategory::destroy($categoryId);
@@ -73,6 +70,7 @@ class ProductCategoriesTree extends Component
     }
 
 
+    #[On('reorder')]
     public function reorder($itemId, $newIndex, $newParentId = null)
     {
         ProductCategory::reorderItem($itemId, $newIndex, $newParentId);

@@ -9,16 +9,35 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
         </x-slot>
 
         <div class="row">
-            <x-rpd::select col="col-md-4" model="product.type" label="Type" :options="$types"  addempty  />
+            <x-rpd::select col="col-md-4" model="product.type" label="Type" :options="$types" addempty />
             <x-rpd::select-list col="col-md-4" model="product.category_id" :options="$availableCategories" label="Category" />
             <x-rpd::input col="col-md-4" model="product.sku" label="Sku" />
-
         </div>
+
         <div class="row">
             <x-rpd::input col="col-md-12" model="product.name" label="Name" />
             <x-rpd::rich-text col="col-md-12 mt-2" model="product.description" label="Description" />
         </div>
 
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">Image</label>
+                <x-rpd::upload model="image" col="" />
+
+                @if($image)
+                    <div class="mt-2">
+                        <img src="{{ $image->temporaryUrl() }}" class="img-thumbnail" style="max-height:160px;" alt="preview">
+                    </div>
+                @elseif($product->image_path)
+                    <div class="mt-2 d-flex align-items-center gap-3">
+                        <img src="{{ Storage::url($product->image_path) }}" class="img-thumbnail" style="max-height:160px;" alt="{{ $product->name }}">
+                        <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
 
         <x-slot name="actions">
             <button type="submit" class="btn btn-primary">Save</button>
