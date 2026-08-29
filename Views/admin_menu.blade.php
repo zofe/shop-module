@@ -8,15 +8,14 @@
     <x-rpd::nav-link label="Prices" route="price_lists.default" active="/pricelists" type="collapse-item" />
 </x-rpd::nav-dropdown>
 
-<x-rpd::nav-dropdown icon="file-invoice" label="Sales & Billing" active="/orders|/subscriptions">
+<x-rpd::nav-dropdown icon="file-invoice" label="Orders & Subscriptions" active="/orders|/subscriptions">
     <x-rpd::nav-link label="Orders" route="orders.table" active="/orders" type="collapse-item" />
     <x-rpd::nav-link label="Subscriptions" route="subscriptions.table" active="/subscriptions" type="collapse-item" />
-{{--    <x-rpd::nav-link label="licenses" route="orders.table" active="/licenses" type="collapse-item" />--}}
 </x-rpd::nav-dropdown>
 
-<x-rpd::nav-dropdown icon="boxes" label="inventory & services" active="/inventory-|/service-">
-    <x-rpd::nav-link label="Inventory Items" route="inventory_items.table" active="/inventory" type="collapse-item" />
-    <x-rpd::nav-link label="Service Items" route="service_items.table" active="/service" type="collapse-item" />
+<x-rpd::nav-dropdown icon="boxes" label="Provisioning" active="/inventory-|/service-">
+    <x-rpd::nav-link label="Inventory" route="inventory_items.table" active="/inventory" type="collapse-item" />
+    <x-rpd::nav-link label="Services" route="service_items.table" active="/service" type="collapse-item" />
 </x-rpd::nav-dropdown>
 <hr class="sidebar-divider">
 @endif

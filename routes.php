@@ -151,6 +151,10 @@ Route::get('/ajax/available-pricelist-item', [\App\Modules\Shop\Http\Controllers
     ->middleware(['web'])
     ->name('ajax.available_pricelist_items');
 
+Route::get('/ajax/available-inventory-item', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'ajax_available_inventory_items'])
+    ->middleware(['web'])
+    ->name('ajax.available_inventory_items');
+
 //Route::get('/ajax/available-pricelist-item', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'ajax_available_product_items'])
 //    ->middleware(['web'])
 //    ->name('ajax.available_pricelist_items');

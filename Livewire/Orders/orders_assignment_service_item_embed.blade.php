@@ -1,6 +1,6 @@
 <tr>
     <td>
-        {{ $assignment->deliverable_type }}
+        {{ $assignment->orderItem->name ?? $assignment->deliverable_type }}
     </td>
     <td>
         @if($assignment->deliverable)

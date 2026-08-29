@@ -15,8 +15,13 @@ class ShopCart extends Component
 {
     use WithDataTable;
 
-    public $listeners = [];
     public $note;
+
+    #[\Livewire\Attributes\On('savedAddress')]
+    public function onAddressSaved(): void
+    {
+        // forza il re-render per rivalutare hasAnyAddresses()
+    }
 
     public function updateItem($rowId, $value)
     {

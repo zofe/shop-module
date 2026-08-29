@@ -9,7 +9,9 @@
 
                 <livewire:shop::orders.orders-modal-edit-embed
                     :order="$order->id"
-                   ></livewire:shop::orders.orders-modal-edit-embed>
+                ></livewire:shop::orders.orders-modal-edit-embed>
+
+                <livewire:shop::orders.orders-assign-item-modal />
 
 
                 <table class="table">

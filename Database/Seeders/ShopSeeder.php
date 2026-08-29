@@ -2,6 +2,8 @@
 
 namespace App\Modules\Shop\Database\Seeders;
 
+use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Models\OrderItem;
 use App\Modules\Shop\Models\PriceList;
 use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Product;
@@ -20,22 +22,26 @@ class ShopSeeder extends Seeder
     {
         $data = include __DIR__ . '/data.php';
 
-        $categories = $data['categories'];
-        $products = $data['products'];
-        $priceLists = $data['price_lists'];
-        $priceListItems = $data['price_list_items'];
-
-        foreach ($categories as $category) {
-            ProductCategory::firstOrNew($category)->save();
+        foreach ($data['categories'] as $row) {
+            ProductCategory::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
-        foreach ($products as $product) {
-            Product::firstOrNew($product)->save();
+        foreach ($data['products'] as $row) {
+            Product::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
-        foreach ($priceLists as $pricelist) {
-            PriceList::firstOrNew($pricelist)->save();
+        foreach ($data['price_lists'] as $row) {
+            PriceList::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
-        foreach ($priceListItems as $price) {
-            PriceListItem::firstOrNew($price)->save();
+        foreach ($data['price_list_items'] as $row) {
+            PriceListItem::firstOrNew(['id' => $row['id']])->fill($row)->save();
+        }
+        foreach ($data['orders'] as $row) {
+            Order::firstOrNew(['id' => $row['id']])->fill($row)->save();
+        }
+        foreach ($data['order_items'] as $row) {
+            OrderItem::firstOrNew([
+                'order_id' => $row['order_id'],
+                'prd_code' => $row['prd_code'],
+            ])->fill($row)->save();
         }
 
     }

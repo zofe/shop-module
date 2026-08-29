@@ -12,9 +12,22 @@ class InventoryItem extends Model
 
     protected $table = 'inventory_items';
 
+    protected $fillable = [
+        'product_id',
+        'status',
+        'serial_number',
+        'qty',
+        'owner_id',
+        'owner_type',
+    ];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function owner()
+    {
+        return $this->morphTo();
     }
 }
