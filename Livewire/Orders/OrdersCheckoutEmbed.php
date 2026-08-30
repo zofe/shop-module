@@ -36,13 +36,74 @@ class OrdersCheckoutEmbed extends Component
             return;
         }
 
-        // TODO: connect to payments-module
-        // $session = PaymentsManager::driver($gateway)->createCheckoutSession($this->order);
-        // $this->redirect($session->url);
+        if (! class_exists(\App\Modules\Payments\PaymentsManager::class)) {
+            session()->flash('checkout_message', 'Payments module not installed.');
+            return;
+        }
 
-        $this->dispatch('payment-initiated', orderId: $this->order->id, gateway: $gateway);
+        try {
+            $manager = app(\App\Modules\Payments\PaymentsManager::class);
+            $driver  = $manager->driver($gateway);
 
-        session()->flash('checkout_message', "Payment via {$gateway} — coming soon.");
+            if ($gateway === 'stripe') {
+                $payment = \App\Modules\Payments\Models\Payment::create([
+                    'description'  => 'Order ' . $this->order->shortId,
+                    'gateway'      => 'stripe',
+                    'status'       => 'pending',
+                    'payment_type' => 'order',
+                    'order_id'     => $this->order->id,
+                    'subtotal'     => $this->order->subtotal,
+                    'shipping'     => $this->order->shipping,
+                    'tax'          => $this->order->tax,
+                    'total'        => $this->order->total,
+                ]);
+
+                $session = $driver->startCheckoutSession(
+                    amount:     (float) $this->order->total,
+                    description: 'Order ' . $this->order->shortId,
+                    successUrl: route('payments.stripe.success', $payment),
+                    cancelUrl:  route('payments.stripe.cancel',  $payment),
+                    options: [
+                        'currency'       => strtolower(config('payments.currency', 'eur')),
+                        'customer_email' => auth()->user()->email,
+                        'metadata'       => ['order_id' => $this->order->id, 'payment_id' => $payment->id],
+                    ]
+                );
+
+                $payment->update(['gateway_id' => $session['session_id']]);
+
+                $this->dispatch('payment-initiated', orderId: $this->order->id, paymentId: $payment->id, gateway: $gateway);
+
+                $this->redirect($session['url']);
+                return;
+            }
+
+            if ($gateway === 'gocardless') {
+                // GoCardless requires an active mandate before charging.
+                // The mandate flow (redirect to GoCardless authorization page) is
+                // handled by the MandateFlow component — not yet implemented.
+                session()->flash('checkout_message', 'GoCardless: mandate flow not yet available.');
+                return;
+            }
+
+            if ($gateway === 'paddle') {
+                // Paddle uses a client-side JS overlay (Paddle.js).
+                // Not yet implemented — requires laravel/cashier-paddle and frontend integration.
+                session()->flash('checkout_message', 'Paddle checkout coming soon.');
+                return;
+            }
+
+        } catch (\RuntimeException $e) {
+            // Gateway package not installed
+            session()->flash('checkout_message', $e->getMessage());
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('initiatePayment failed', [
+                'gateway'  => $gateway,
+                'order_id' => $this->order->id,
+                'error'    => $e->getMessage(),
+            ]);
+            session()->flash('checkout_message', 'Payment could not be initiated. Please try again.');
+        }
     }
 
     public function render()
