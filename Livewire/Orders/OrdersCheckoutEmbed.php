@@ -40,6 +40,22 @@ class OrdersCheckoutEmbed extends Component
         }
 
         try {
+            $taxRate = config('cart.tax', 22);
+            $items = $this->order->items->map(fn ($item) => [
+                'name'         => $item->name,
+                'prd_code'     => $item->prd_code ?? null,
+                'order_item_id' => $item->id,
+                'qty'          => (float) $item->qty,
+                'price'        => (float) $item->price,
+                'subtotal'     => (float) $item->subtotal,
+                'shipping'     => (float) ($item->shipping ?? 0),
+                'discountRate' => (float) ($item->discountRate ?? 0),
+                'discount'     => (float) ($item->discount ?? 0),
+                'taxRate'      => (float) $taxRate,
+                'tax'          => round((float) $item->subtotal * $taxRate / 100, 2),
+                'total'        => round((float) $item->subtotal * (1 + $taxRate / 100), 2),
+            ])->all();
+
             $data = new CheckoutData(
                 orderId:       $this->order->id,
                 total:         (float) $this->order->total,
@@ -50,6 +66,7 @@ class OrdersCheckoutEmbed extends Component
                 currency:      config('payments.currency', 'eur'),
                 customerEmail: auth()->user()->email,
                 metadata:      ['order_id' => $this->order->id],
+                items:         $items,
             );
 
             $url = app(PaymentsManager::class)->driver($gateway)->initiateCheckout($data);
