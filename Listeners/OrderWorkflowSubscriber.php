@@ -29,7 +29,12 @@ class OrderWorkflowSubscriber
     {
         /** @var Order $order */
         $order = $event->getSubject();
-        $event->setBlocked(true, 'please assign each item in delivery');
+
+        $incomplete_count = $order->workflow_count_incomplete_from($order->assignments);
+
+        if ($incomplete_count > 0) {
+            $event->setBlocked(true, 'please check delivery items');
+        }
     }
 
     /**

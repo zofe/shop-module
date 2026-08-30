@@ -18,7 +18,7 @@
             <thead>
             <tr>
                 <th>
-                    <x-rpd::sort model="id" label="id" />
+                   id
                 </th>
                 <th>service</th>
                 <th>status</th>
@@ -33,7 +33,8 @@
             @foreach ($items as $item)
                 <tr>
                     <td>
-                        <a href="{{ route_lang('service_items.edit', $item->id ) }}">{{ $item->id }}</a>
+                        <x-rpd::nav-link :label="$item->shortId" route="service_items.edit" :params="$item->id" />
+{{--                        <a href="{{ route_lang('service_items.edit', $item->id ) }}">{{ $item->id }}</a>--}}
                     </td>
                     <td>{{ $item->product->name }} </td>
                     <td>{{ $item->status }} </td>

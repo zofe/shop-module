@@ -80,4 +80,30 @@ return [
         'service_item'   => App\Modules\Shop\Models\ServiceItem::class,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Payment gateways available at checkout
+    |--------------------------------------------------------------------------
+    |
+    | Each entry maps a gateway key (used by payments-module) to its display label and icon.
+    |
+    */
+    'payment_gateways' => [
+        'stripe' => [
+            'label' => 'Credit / Debit Card',
+            'description' => 'Pay securely via Stripe',
+            'icon' => 'fa-credit-card',
+        ],
+        'paddle' => [
+            'label' => 'Paddle',
+            'description' => 'Pay via Paddle (MoR)',
+            'icon' => 'fa-shopping-bag',
+        ],
+        'gocardless' => [
+            'label' => 'Direct Debit',
+            'description' => 'Pay via GoCardless bank debit',
+            'icon' => 'fa-university',
+        ],
+    ],
+
 ];

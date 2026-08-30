@@ -18,7 +18,7 @@
             <thead>
             <tr>
                 <th>
-                    <x-rpd::sort model="id" label="id" />
+                   id
                 </th>
                 <th>serial_number</th>
                 <th>product</th>
