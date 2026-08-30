@@ -115,6 +115,18 @@ Route::get('/orders/view/{order}', \App\Modules\Shop\Livewire\Orders\OrdersView:
     ->name('orders.view')
     ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.table')->push('Order Detail', route('orders.view', $order)));
 
+Route::get('/orders/view/{order}/impersonate-owner', function (\App\Modules\Shop\Models\Order $order) {
+    abort_unless(auth()->user()->canImpersonate(), 403);
+    abort_unless($order->user && $order->user->canBeImpersonated(), 403);
+    auth()->user()->impersonate($order->user);
+    return redirect()->route('shop.order', $order);
+})->middleware(['web', 'auth'])->name('orders.impersonate-owner');
+
+Route::get('/orders/pay/{order}', \App\Modules\Shop\Livewire\Orders\OrdersCheckout::class)
+    ->middleware(['web', 'auth'])
+    ->name('orders.pay')
+    ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.view', $order)->push('Checkout', route('orders.pay', $order)));
+
 Route::get('/subscriptions/table', \App\Modules\Shop\Livewire\Subscriptions\SubscriptionsTable::class)
     ->middleware(['web'])
     ->name('subscriptions.table')

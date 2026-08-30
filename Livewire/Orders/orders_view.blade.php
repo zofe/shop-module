@@ -129,8 +129,8 @@
                 <livewire:workflow::workflow-table-embed
                     workfloable-type="order"
                     workfloable-id="{{ $order->id }}"
+                    editable="true"
                     showHistory="true"
-
                 />
             </x-rpd::card>
 
@@ -147,8 +147,14 @@
                         <dt class="col-4">User</dt>
                         <dd class="col-8">
                             <x-rpd::nav-link icon="user" :label="$order->user->name" name="edit" route="auth.users.view" :params="$order->user_id" />
+                            @canImpersonate
+                            @if($order->user->canBeImpersonated())
+                                <a href="{{ route('orders.impersonate-owner', $order) }}" class="btn btn-xsm btn-link text-muted ms-1" title="View order as this customer">
+                                    <i class="fas fa-user-secret"></i>
+                                </a>
+                            @endif
+                            @endCanImpersonate
                         </dd>
-
                     @endif
 
                     @if($order->shipping_address)
