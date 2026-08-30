@@ -8,9 +8,12 @@
     <x-rpd::nav-link label="Prices" route="price_lists.default" active="/pricelists" type="collapse-item" />
 </x-rpd::nav-dropdown>
 
-<x-rpd::nav-dropdown icon="file-invoice" label="Orders & Subscriptions" active="/orders|/subscriptions">
+<x-rpd::nav-dropdown icon="file-invoice" label="Orders & Subscriptions" active="/orders|/subscriptions|/payments">
     <x-rpd::nav-link label="Orders" route="orders.table" active="/orders" type="collapse-item" />
     <x-rpd::nav-link label="Subscriptions" route="subscriptions.table" active="/subscriptions" type="collapse-item" />
+    @if(Route::has('payments.table'))
+        <x-rpd::nav-link label="Payments" route="payments.table" active="/payments" type="collapse-item" />
+    @endif
 </x-rpd::nav-dropdown>
 
 <x-rpd::nav-dropdown icon="boxes" label="Provisioning" active="/inventory-|/service-">
