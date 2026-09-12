@@ -19,7 +19,7 @@ class OrderService
     {
         if($user_id) {
             $user = User::find($user_id);
-            $company = optional($user->companies())->first();
+            $company = $user?->company;
         } elseif ($company_id) {
             $company = Company::find($company_id);
             $user = $company->owner;

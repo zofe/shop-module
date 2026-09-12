@@ -5,7 +5,9 @@ namespace App\Modules\Shop;
 
 use App\Modules\Shop\Cart\Cart;
 
+use App\Modules\Payments\Events\PaymentConfirmed;
 use App\Modules\Shop\Listeners\OrderItemAssignmentWorkflowSubscriber;
+use App\Modules\Shop\Listeners\PaymentConfirmedListener;
 use Livewire\Livewire;
 use App\Modules\Shop\Listeners\OrderWorkflowSubscriber;
 use App\Modules\Shop\Models\Order;
@@ -41,5 +43,8 @@ class ShopServiceProvider extends ServiceProvider
 
         Event::subscribe(OrderWorkflowSubscriber::class);
         Event::subscribe(OrderItemAssignmentWorkflowSubscriber::class);
+        if (class_exists(PaymentConfirmed::class)) {
+            Event::listen(PaymentConfirmed::class, PaymentConfirmedListener::class);
+        }
     }
 }

@@ -119,10 +119,25 @@
             <x-rpd::card title="Status">
                 <dl class="row">
                     <dt class="col-4">Created at</dt>
-                    <dd class="col-8"> <x-rpd::date-formatted :date="$order->created_at"></x-rpd::date-formatted></dd>
+                    <dd class="col-8"><x-rpd::date-formatted :date="$order->created_at"></x-rpd::date-formatted></dd>
 
                     <dt class="col-4">Status</dt>
-                    <dd class="col-8"> {{ $order->status }}</dd>
+                    <dd class="col-8">{{ $order->status }}</dd>
+
+                    @php $payment = class_exists(\App\Modules\Payments\Models\Payment::class) ? \App\Modules\Payments\Models\Payment::where('order_id', $order->id)->latest()->first() : null; @endphp
+                    @if($payment)
+                        <dt class="col-4">Payment</dt>
+                        <dd class="col-8">
+                            <a href="{{ route('payments.view', $payment) }}" class="small">
+                                <span class="badge bg-{{ match($payment->status) {
+                                    'confirmed' => 'success',
+                                    'failed','cancelled' => 'danger',
+                                    default => 'warning text-dark',
+                                } }}">{{ $payment->status }}</span>
+                                <span class="text-muted ms-1">{{ $payment->gateway }}</span>
+                            </a>
+                        </dd>
+                    @endif
                 </dl>
 
 

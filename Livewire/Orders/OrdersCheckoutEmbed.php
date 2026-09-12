@@ -39,6 +39,11 @@ class OrdersCheckoutEmbed extends Component
             return;
         }
 
+        if (! class_exists(PaymentsManager::class)) {
+            session()->flash('checkout_message', 'Online payments are not available: the payments module is not installed.');
+            return;
+        }
+
         try {
             $taxRate = config('cart.tax', 22);
             $items = $this->order->items->map(fn ($item) => [

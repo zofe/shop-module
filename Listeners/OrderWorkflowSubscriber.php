@@ -11,17 +11,19 @@ class OrderWorkflowSubscriber
 
     public function onGuardPayOrder($event)
     {
+        if (config('shop.checkout_mode', 'immediate') !== 'after_assignment') {
+            return;
+        }
+
         /** @var Order $order */
         $order = $event->getSubject();
 
-        // check if there are any assignments that are blocked
-        $block_count = $order->workflow_count_transition_blocked_from($order->assignments);
+        $block_count      = $order->workflow_count_transition_blocked_from($order->assignments);
         $incomplete_count = $order->workflow_count_incomplete_from($order->assignments);
 
-        if($block_count>0 || $incomplete_count>0) {
-            $event->setBlocked(true, 'please check delivery items ');
+        if ($block_count > 0 || $incomplete_count > 0) {
+            $event->setBlocked(true, 'All delivery items must be assigned before payment.');
         }
-
     }
 
 

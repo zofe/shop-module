@@ -38,8 +38,17 @@ class ShopCart extends Component
         $order = OrderService::createOrderFromCart($this->note, auth()->user()->id);
         if ($order) {
             Cart::destroy();
+
+            if (config('shop.checkout_mode', 'immediate') === 'immediate') {
+                $workflow = \Workflow::get($order, 'order');
+                if ($workflow->can($order, 'pay_order')) {
+                    $workflow->apply($order, 'pay_order');
+                    $order->save();
+                }
+            }
+
             session()->flash('success', 'Order created');
-            return redirect()->route('shop.orders');//, $order->id);
+            return redirect()->route('shop.order', $order);
         }
     }
 
