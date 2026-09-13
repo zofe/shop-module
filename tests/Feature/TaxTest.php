@@ -108,7 +108,7 @@ class TaxTest extends TestCase
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
         app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1); // 299 €
 
-        $order = OrderService::createOrderFromCart(null, $user->id);
+        $order = OrderService::createOrderFromCart(null, $user->id, null, $user->addresses()->first()->id);
 
         $this->assertSame([20.0, 'eu_b2c', 'eu_vat', false], [(float) $order->tax_rate, $order->tax_reason, $order->tax_source, (bool) $order->tax_final]);
         $this->assertEquals(59.80, $order->tax);
@@ -133,9 +133,33 @@ class TaxTest extends TestCase
 
         app('cart')->destroy();
         app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
-        $order = OrderService::createOrderFromCart(null, $user->id, null, $bobs->id);
-        $this->assertSame('eu_b2c', $order->tax_reason, "somebody else's address is ignored: back to the first with a country (FR)");
-        $this->assertNull($order->shipping_address);
+        try {
+            OrderService::createOrderFromCart(null, $user->id, null, $bobs->id);
+            $this->fail("somebody else's address must not be accepted");
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('shipping address', $e->getMessage());
+        }
+    }
+
+    public function test_physical_goods_need_a_shipping_address()
+    {
+        $this->fakeVies();
+        $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
+        $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
+        $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
+
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1); // inventory item (physical)
+        try {
+            OrderService::createOrderFromCart(null, $user->id);
+            $this->fail('no address, no order');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('shipping address', $e->getMessage());
+        }
+        $this->assertNotNull(OrderService::createOrderFromCart(null, $user->id, null, $fr->id));
+
+        app('cart')->destroy();
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(2), 1); // service: no address needed
+        $this->assertNotNull(OrderService::createOrderFromCart(null, $user->id));
     }
 
     public function test_the_cart_shows_the_estimate_of_the_customer()

@@ -118,11 +118,19 @@
                 </x-rpd::table>
 
 
-                @if(Cart::content()->count() && auth()->user() && auth()->user()->hasAnyAddresses())
-
-                    <div class="text-center">
-                        <a class="btn btn-primary my-2"  wire:click.prevent="makeOrder">Make Order</a>
-                    </div>
+                @if(Cart::content()->count() && auth()->user())
+                    @if(session('cart_error'))
+                        <div class="alert alert-warning py-2 my-2">{{ session('cart_error') }}</div>
+                    @endif
+                    @if($requiresShipping && ! $addressId)
+                        <div class="text-center text-muted small my-2">
+                            <i class="fas fa-truck me-1"></i> This order contains physical goods: add and choose a shipping address to continue.
+                        </div>
+                    @else
+                        <div class="text-center">
+                            <a class="btn btn-primary my-2" wire:click.prevent="makeOrder">Make Order</a>
+                        </div>
+                    @endif
                 @endif
 
             </x-rpd::card>

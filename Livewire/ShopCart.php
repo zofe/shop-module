@@ -7,6 +7,7 @@ use App\Modules\Shop\CartFacade as Cart;
 
 use App\Modules\Shop\Services\OrderService;
 use App\Modules\Shop\Tax\Tax;
+use App\Modules\Shop\Tax\TaxContext;
 use Livewire\Component;
 
 use Zofe\Rapyd\Traits\WithDataTable;
@@ -49,8 +50,19 @@ class ShopCart extends Component
         Cart::remove($rowId);
     }
 
+    /** Physical goods (inventory items) need a shipping address; services and licences do not. */
+    public function requiresShipping(): bool
+    {
+        return Cart::content()->contains(fn ($item) => ($item->model?->product?->type ?? null) === 'inventory_item');
+    }
+
     public function makeOrder()
     {
+        if ($this->requiresShipping() && ! $this->addressId) {
+            session()->flash('cart_error', 'Choose a shipping address before making the order.');
+            return;
+        }
+
         $order = OrderService::createOrderFromCart($this->note, auth()->user()->id, null, $this->addressId);
         if ($order) {
             Cart::destroy();
@@ -73,10 +85,11 @@ class ShopCart extends Component
         // The tax shown in the cart is the estimate for the logged-in customer and the chosen address
         $addressable = auth()->user()?->company ?: auth()->user();
         $address = $this->addressId && $addressable ? $addressable->addresses()->find($this->addressId) : null;
-        $estimate = Tax::forUser(auth()->user(), address: $address);
+        $requiresShipping = $this->requiresShipping();
+        $estimate = Tax::forUser(auth()->user(), $requiresShipping ? TaxContext::PHYSICAL : TaxContext::DIGITAL, $address);
         Cart::setGlobalTax($estimate->rate);
 
         $items = Cart::content();
-        return view('shop::shop.shop_cart', compact('items', 'estimate'))->layout('shop::frontend');
+        return view('shop::shop.shop_cart', compact('items', 'estimate', 'requiresShipping'))->layout('shop::frontend');
     }
 }

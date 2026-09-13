@@ -42,7 +42,12 @@ class OrderService
         $order->subtotal = Cart::subtotalFloat();
 
         $address = $address_id ? self::addressOf($company ?: $user, $address_id) : null;
-        $estimate = $company ? Tax::forCompany($company, address: $address) : Tax::forUser($user, address: $address);
+        $physical = Cart::content()->contains(fn ($item) => ($item->model?->product?->type ?? null) === 'inventory_item');
+        if ($physical && ! $address) {
+            throw new \InvalidArgumentException('createOrderFromCart: a shipping address is required for physical goods');
+        }
+        $kind = $physical ? \App\Modules\Shop\Tax\TaxContext::PHYSICAL : \App\Modules\Shop\Tax\TaxContext::DIGITAL;
+        $estimate = $company ? Tax::forCompany($company, $kind, $address) : Tax::forUser($user, $kind, $address);
         $taxRate = $estimate->rate;
         $tax = (Cart::subtotalFloat() + Cart::shippingFloat()) * $taxRate / 100;
         $total = round(Cart::subtotalFloat() + Cart::shippingFloat() + $tax, 2);
