@@ -540,7 +540,24 @@ class CartItem implements Arrayable, Jsonable, BuyableItem
     {
         $options = Arr::get($attributes, 'options', []);
 
-        return new self($attributes['id'], $attributes['name'], $attributes['price'], $attributes['priceActivation'], $attributes['weight'], $options);
+        $item = new self(
+            $attributes['id'],
+            $attributes['sku'] ?? null,
+            $attributes['name'] ?? null,
+            $attributes['price'] ?? 0,
+            $attributes['priceActivation'] ?? 0,
+            $attributes['weight'] ?? 0,
+            $attributes['shipping'] ?? 0,
+            is_array($options) ? $options : []
+        );
+        $item->qty = $attributes['qty'] ?? 1;
+        $item->setTaxRate($attributes['taxRate'] ?? 0);
+        $item->setDiscountRate($attributes['discountRate'] ?? 0);
+        if (! empty($attributes['associatedModel'])) {
+            $item->associate($attributes['associatedModel']);
+        }
+
+        return $item;
     }
 
     /**
@@ -598,6 +615,10 @@ class CartItem implements Arrayable, Jsonable, BuyableItem
             'shipping' => $this->shipping,
             'tax'      => $this->tax,
             'subtotal' => $this->subtotal,
+            // what fromArray() needs to rebuild the item (the session may store it as JSON)
+            'taxRate'         => $this->taxRate,
+            'discountRate'    => $this->discountRate,
+            'associatedModel' => $this->associatedModel,
         ];
     }
 

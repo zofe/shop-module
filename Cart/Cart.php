@@ -306,11 +306,7 @@ class Cart
      */
     public function content()
     {
-        if (is_null($this->session->get($this->instance))) {
-            return new Collection([]);
-        }
-
-        return $this->session->get($this->instance);
+        return $this->getContent();
     }
 
     /**
@@ -835,11 +831,23 @@ class Cart
      */
     protected function getContent()
     {
-        if ($this->session->has($this->instance)) {
-            return $this->session->get($this->instance);
+        if (! $this->session->has($this->instance)) {
+            return new Collection();
         }
 
-        return new Collection();
+        return static::hydrate($this->session->get($this->instance));
+    }
+
+    /**
+     * The cart content as a Collection of CartItem keyed by rowId, whatever the
+     * session gave back: the objects themselves (PHP serialization) or their
+     * arrays (Laravel 13 serializes the session as JSON).
+     */
+    public static function hydrate($content): Collection
+    {
+        return (new Collection($content))
+            ->map(fn ($item) => $item instanceof CartItem ? $item : CartItem::fromArray((array) $item))
+            ->keyBy('rowId');
     }
 
     /**
