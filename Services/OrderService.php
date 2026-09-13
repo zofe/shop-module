@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public static function createOrderFromCart($note = null, $user_id = null, $company_id = null)
+    /** $address_id: the shipping address chosen at checkout (an Address of the user or of their company). */
+    public static function createOrderFromCart($note = null, $user_id = null, $company_id = null, $address_id = null)
     {
         if($user_id) {
             $user = config('auth.providers.users.model')::find($user_id);
@@ -40,7 +41,8 @@ class OrderService
         $order->discount = Cart::discountFloat();
         $order->subtotal = Cart::subtotalFloat();
 
-        $estimate = $company ? Tax::forCompany($company) : Tax::forUser($user);
+        $address = $address_id ? self::addressOf($company ?: $user, $address_id) : null;
+        $estimate = $company ? Tax::forCompany($company, address: $address) : Tax::forUser($user, address: $address);
         $taxRate = $estimate->rate;
         $tax = (Cart::subtotalFloat() + Cart::shippingFloat()) * $taxRate / 100;
         $total = round(Cart::subtotalFloat() + Cart::shippingFloat() + $tax, 2);
@@ -50,6 +52,9 @@ class OrderService
         $order->tax_reason = $estimate->reason;
         $order->tax_source = $estimate->source;
         $order->tax_final = $estimate->final;
+        if ($address) {
+            $order->shipping_address = array_filter($address->only(['address', 'street_number', 'zipcode', 'city', 'province', 'region', 'country', 'country_code', 'state_code']));
+        }
         $order->shipping = Cart::shippingFloat();
         $order->total = $total;
         $order->note = $note;
@@ -65,6 +70,12 @@ class OrderService
         return $order;
     }
 
+
+    /** The address only if it belongs to the customer (or their company): never trust an id from the browser. */
+    protected static function addressOf($owner, $address_id)
+    {
+        return $owner && method_exists($owner, 'addresses') ? $owner->addresses()->find($address_id) : null;
+    }
 
     public static function addItemsFromCart($cartInstance, Order $order, $recalculate = false)
     {

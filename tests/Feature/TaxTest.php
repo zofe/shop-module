@@ -116,6 +116,28 @@ class TaxTest extends TestCase
         $this->assertEquals(20.0, $order->items()->first()->taxRate);
     }
 
+    public function test_the_order_uses_the_chosen_address()
+    {
+        $this->fakeVies();
+        $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
+        $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
+        $us = $user->addresses()->create(['address' => '1 Main St', 'city' => 'Austin', 'zipcode' => '73301', 'country_code' => 'US', 'state_code' => 'TX']);
+        $other = User::create(['name' => 'Bob', 'email' => 'bob@example.com', 'password' => 'x']);
+        $bobs = $other->addresses()->create(['address' => 'Elsewhere', 'city' => 'X', 'zipcode' => '1', 'country_code' => 'DE']);
+        $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
+
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        $order = OrderService::createOrderFromCart(null, $user->id, null, $us->id);
+        $this->assertSame(['export', 'US', 'TX'], [$order->tax_reason, $order->shipping_address['country_code'], $order->shipping_address['state_code']]);
+        $this->assertEquals(0, $order->tax);
+
+        app('cart')->destroy();
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        $order = OrderService::createOrderFromCart(null, $user->id, null, $bobs->id);
+        $this->assertSame('eu_b2c', $order->tax_reason, "somebody else's address is ignored: back to the first with a country (FR)");
+        $this->assertNull($order->shipping_address);
+    }
+
     public function test_the_cart_shows_the_estimate_of_the_customer()
     {
         $this->fakeVies();

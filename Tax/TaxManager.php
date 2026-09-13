@@ -26,28 +26,29 @@ class TaxManager
     }
 
     /** The estimate for a user (their company when they have one), null user = anonymous visitor. */
-    public function forUser(?Model $user, string $kind = TaxContext::DIGITAL): TaxResult
+    public function forUser(?Model $user, string $kind = TaxContext::DIGITAL, ?Model $address = null): TaxResult
     {
-        return $this->resolve($this->contextFor($user, $kind));
+        return $this->resolve($this->contextFor($user, $kind, $address));
     }
 
-    public function forCompany(?Model $company, string $kind = TaxContext::DIGITAL): TaxResult
+    public function forCompany(?Model $company, string $kind = TaxContext::DIGITAL, ?Model $address = null): TaxResult
     {
-        return $this->resolve($this->contextFromCompany($company, $kind));
+        return $this->resolve($this->contextFromCompany($company, $kind, $address));
     }
 
-    public function contextFor(?Model $user, string $kind = TaxContext::DIGITAL): TaxContext
+    /** $address: the one chosen at checkout; otherwise the first with a country of the company or the user. */
+    public function contextFor(?Model $user, string $kind = TaxContext::DIGITAL, ?Model $address = null): TaxContext
     {
         if (! $user) {
-            return new TaxContext(kind: $kind);
+            return new TaxContext(countryCode: $address?->country_code, stateCode: $address?->state_code, postcode: $address?->zipcode, kind: $kind);
         }
 
         $company = method_exists($user, 'company') ? $user->company : null;
         if ($company) {
-            return $this->contextFromCompany($company, $kind);
+            return $this->contextFromCompany($company, $kind, $address);
         }
 
-        $address = method_exists($user, 'addresses') ? $this->billingAddress($user) : null;
+        $address ??= method_exists($user, 'addresses') ? $this->billingAddress($user) : null;
 
         return new TaxContext(
             countryCode: $address?->country_code,
@@ -63,9 +64,9 @@ class TaxManager
         return $owner->addresses()->whereNotNull('country_code')->first() ?? $owner->addresses()->first();
     }
 
-    protected function contextFromCompany(?Model $company, string $kind): TaxContext
+    protected function contextFromCompany(?Model $company, string $kind, ?Model $address = null): TaxContext
     {
-        $address = $company && method_exists($company, 'addresses') ? $this->billingAddress($company) : null;
+        $address ??= $company && method_exists($company, 'addresses') ? $this->billingAddress($company) : null;
 
         return new TaxContext(
             countryCode: $address?->country_code,

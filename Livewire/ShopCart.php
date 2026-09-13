@@ -18,10 +18,25 @@ class ShopCart extends Component
 
     public $note;
 
+    /** The shipping address chosen in the list (remembered in the session). */
+    public ?string $addressId = null;
+
+    public function mount(): void
+    {
+        $this->addressId = session('shop.address_id');
+    }
+
     #[\Livewire\Attributes\On('savedAddress')]
     public function onAddressSaved(): void
     {
         // forza il re-render per rivalutare hasAnyAddresses()
+    }
+
+    #[\Livewire\Attributes\On('selectedAddress')]
+    public function onAddressSelected(?string $addressId = null): void
+    {
+        $this->addressId = $addressId;
+        session(['shop.address_id' => $addressId]);
     }
 
     public function updateItem($rowId, $value)
@@ -36,7 +51,7 @@ class ShopCart extends Component
 
     public function makeOrder()
     {
-        $order = OrderService::createOrderFromCart($this->note, auth()->user()->id);
+        $order = OrderService::createOrderFromCart($this->note, auth()->user()->id, null, $this->addressId);
         if ($order) {
             Cart::destroy();
 
@@ -55,8 +70,10 @@ class ShopCart extends Component
 
     public function render()
     {
-        // The tax shown in the cart is the estimate for the logged-in customer
-        $estimate = Tax::forUser(auth()->user());
+        // The tax shown in the cart is the estimate for the logged-in customer and the chosen address
+        $addressable = auth()->user()?->company ?: auth()->user();
+        $address = $this->addressId && $addressable ? $addressable->addresses()->find($this->addressId) : null;
+        $estimate = Tax::forUser(auth()->user(), address: $address);
         Cart::setGlobalTax($estimate->rate);
 
         $items = Cart::content();

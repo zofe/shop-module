@@ -16,5 +16,7 @@
         :addressableType="$addressable->getMorphClass()"
         :addressableId="$addressable->id"
         :editable="true"
+        :selectable="true"
+        :selected="$addressId"
     />
 </div>

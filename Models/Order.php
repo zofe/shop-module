@@ -14,6 +14,12 @@ class Order extends Model
 {
     use HasUuids, ShortId, RecalculatesTotals, WorkflowTrait;
 
+    protected $casts = [
+        'shipping_address' => 'array',
+        'customer_data'    => 'array',
+        'tax_final'        => 'boolean',
+    ];
+
     protected $table = 'orders';
 
     protected function getItems()
