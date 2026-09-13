@@ -35,8 +35,13 @@ class SubscriptionsTable extends Component
 
     public function getDataSet()
     {
-        $items = Subscription::search($this->search)
-        ;
+        $items = Subscription::query()->when($this->search, function ($q) {
+            $q->where(function ($q) {
+                foreach (Subscription::$searchableColumns as $column) {
+                    $q->orWhere($column, 'like', '%' . $this->search . '%');
+                }
+            });
+        });
 
         return $items = $items
             ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')

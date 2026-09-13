@@ -8,13 +8,15 @@ use Carbon\Carbon;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Scout\Searchable;
+use Zofe\Rapyd\Traits\SSearch;
 use Zofe\Rapyd\Traits\ShortId;
 
 
 class Subscription extends Model
 {
-    use HasUuids, ShortId, RecalculatesTotals, Searchable;
+    use HasUuids, ShortId, RecalculatesTotals, SSearch;
+
+    public static array $searchableColumns = ['id', 'description', 'status'];
 
     protected $table = 'subscriptions';
 
