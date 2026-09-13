@@ -45,7 +45,7 @@ class OrdersCheckoutEmbed extends Component
         }
 
         try {
-            $taxRate = config('shop.tax', 22);
+            $taxRate = $this->order->tax_rate ?? config('shop.tax', 22);
             $items = $this->order->items->map(fn ($item) => [
                 'name'         => $item->name,
                 'prd_code'     => $item->prd_code ?? null,

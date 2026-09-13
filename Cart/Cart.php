@@ -633,6 +633,8 @@ class Cart
             $content->each(function ($item, $key) {
                 $item->setTaxRate($this->taxRate);
             });
+            // getContent() rebuilds the items from the session: persist the new rates
+            $this->session->put($this->instance, $content);
         }
     }
 

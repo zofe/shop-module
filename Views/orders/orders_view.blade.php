@@ -51,7 +51,7 @@
                     </tr>
                     <tr>
                         <td colspan="4">&nbsp;</td>
-                        <td class="text-end">Tax</td>
+                        <td class="text-end">Tax @if($order->tax_rate !== null)<small class="text-muted" title="{{ $order->tax_reason }}">({{ $order->tax_final ? '' : 'estimated, ' }}{{ $order->tax_rate + 0 }}%)</small>@endif</td>
                         <td class="text-end tax">{{ $order->tax }} {{ Cart::currency() }}</td>
                     </tr>
                     <tr>

@@ -6,6 +6,7 @@ namespace App\Modules\Shop\Livewire;
 use App\Modules\Shop\CartFacade as Cart;
 
 use App\Modules\Shop\Services\OrderService;
+use App\Modules\Shop\Tax\Tax;
 use Livewire\Component;
 
 use Zofe\Rapyd\Traits\WithDataTable;
@@ -54,7 +55,11 @@ class ShopCart extends Component
 
     public function render()
     {
+        // The tax shown in the cart is the estimate for the logged-in customer
+        $estimate = Tax::forUser(auth()->user());
+        Cart::setGlobalTax($estimate->rate);
+
         $items = Cart::content();
-        return view('shop::shop.shop_cart', compact('items'))->layout('shop::frontend');
+        return view('shop::shop.shop_cart', compact('items', 'estimate'))->layout('shop::frontend');
     }
 }

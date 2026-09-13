@@ -102,7 +102,7 @@
                         </tr>
                         <tr>
                             <td colspan="5">&nbsp;</td>
-                            <td class="text-end">Tax</td>
+                            <td class="text-end">Tax <small class="text-muted" title="{{ $estimate->reason }}">(estimated, {{ $estimate->rate + 0 }}%)</small></td>
                             <td class="text-end tax">{{ Cart::tax() }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr>

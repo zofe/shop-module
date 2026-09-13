@@ -44,7 +44,7 @@ class SubscriptionItem extends Model
 
         static::creating(function ($item){
             $item->subtotal = $item->price * $item->qty;
-            $item->taxRate = ($item->subscription->company) ? $item->subscription->company->tax_perc : config('shop.tax', 22);
+            $item->taxRate = \App\Modules\Shop\Tax\Tax::forCompany($item->subscription->company)->rate;
             $item->total = $item->getCalculated('total');
         });
 

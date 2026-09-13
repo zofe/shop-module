@@ -28,6 +28,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tax estimate
+    |--------------------------------------------------------------------------
+    |
+    | How the tax of a sale is estimated from the customer's billing data
+    | (company VAT number, address country/state). The cart and the order show
+    | the estimate; a gateway able to compute taxes (Stripe Tax, Paddle) may
+    | replace it with the final amount.
+    |   flat    : config('shop.tax') for everybody
+    |   eu_vat  : the rules of a seller established in the EU (domestic rate,
+    |             EU B2B reverse charge after a VIES check, customer-country
+    |             rate for EU consumers, 0% outside the EU)
+    |   a class : your own App\Modules\Shop\Tax\Contracts\TaxResolver
+    |
+    */
+    'tax_resolver'   => env('SHOP_TAX_RESOLVER', 'flat'),
+    'seller_country' => env('SHOP_SELLER_COUNTRY', 'IT'),
+    'tax_rates'      => [],   // overrides of App\Modules\Shop\Tax\EuRates::STANDARD, e.g. ['IT' => 22]
+
+    /*
+    |--------------------------------------------------------------------------
     | Shoppingcart database settings
     |--------------------------------------------------------------------------
     |

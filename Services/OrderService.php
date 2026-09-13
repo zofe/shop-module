@@ -10,6 +10,7 @@ use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\OrderItem;
 use App\Modules\Shop\Models\OrderItemAssignment;
 use App\Modules\Shop\Models\PriceList;
+use App\Modules\Shop\Tax\Tax;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -39,11 +40,16 @@ class OrderService
         $order->discount = Cart::discountFloat();
         $order->subtotal = Cart::subtotalFloat();
 
-        $taxRate = ($company) ? (int) $company->tax_perc : config('shop.tax');
+        $estimate = $company ? Tax::forCompany($company) : Tax::forUser($user);
+        $taxRate = $estimate->rate;
         $tax = (Cart::subtotalFloat() + Cart::shippingFloat()) * $taxRate / 100;
         $total = round(Cart::subtotalFloat() + Cart::shippingFloat() + $tax, 2);
 
         $order->tax = round($tax, 2);
+        $order->tax_rate = $taxRate;
+        $order->tax_reason = $estimate->reason;
+        $order->tax_source = $estimate->source;
+        $order->tax_final = $estimate->final;
         $order->shipping = Cart::shippingFloat();
         $order->total = $total;
         $order->note = $note;
@@ -82,7 +88,7 @@ class OrderService
                 'price' => $item->price, //+ $item->priceActivation,
                 'subtotal' => $item->subtotal,
                 'discountRate' => $item->discountRate,
-                'taxRate' => $item->taxRate,
+                'taxRate' => $order->tax_rate ?? $item->taxRate,
                 'shipping' => $item->shipping,
                 'bundle_code' => isset($item->options['bundle_code']) ? $item->options['bundle_code'] : 0,
             ]);

@@ -9,6 +9,12 @@ use App\Modules\Shop\Listeners\OrderWorkflowSubscriber;
 use App\Modules\Shop\Listeners\PaymentConfirmedListener;
 use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\OrderItemAssignment;
+use App\Modules\Shop\Tax\Contracts\TaxResolver;
+use App\Modules\Shop\Tax\Contracts\ViesClient;
+use App\Modules\Shop\Tax\EuVatResolver;
+use App\Modules\Shop\Tax\FlatRateResolver;
+use App\Modules\Shop\Tax\TaxManager;
+use App\Modules\Shop\Tax\Vies\RestViesClient;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Event;
@@ -34,6 +40,18 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/shop.php', 'shop');
 
         $this->app->bind('cart', Cart::class);
+
+        $this->app->bind(ViesClient::class, RestViesClient::class);
+        $this->app->bind(TaxResolver::class, function ($app) {
+            $resolver = config('shop.tax_resolver', 'flat');
+
+            return match ($resolver) {
+                'flat', null, '' => new FlatRateResolver(),
+                'eu_vat'         => $app->make(EuVatResolver::class),
+                default          => $app->make($resolver),
+            };
+        });
+        $this->app->singleton(TaxManager::class);
 
         Relation::morphMap(config('shop.deliverable_types', []), true);
         Relation::morphMap([
