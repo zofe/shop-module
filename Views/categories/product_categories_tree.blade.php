@@ -36,7 +36,7 @@
 
                     </div>
 
-                    @include('shop::Categories.product_categories_tree_nested', ['category' => $category])
+                    @include('shop::categories.product_categories_tree_nested', ['category' => $category])
 
 
                 </li>
