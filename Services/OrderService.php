@@ -2,8 +2,7 @@
 
 namespace App\Modules\Shop\Services;
 
-use App\Models\User;
-use App\Modules\Companies\Models\Company;
+use Zofe\Rapyd\Modules\Companies\Models\Company;
 use App\Modules\Shop\Cart\CartItem;
 use App\Modules\Shop\CartFacade as Cart;
 use App\Modules\Shop\Models\License;
@@ -18,7 +17,7 @@ class OrderService
     public static function createOrderFromCart($note = null, $user_id = null, $company_id = null)
     {
         if($user_id) {
-            $user = User::find($user_id);
+            $user = config('auth.providers.users.model')::find($user_id);
             $company = $user?->company;
         } elseif ($company_id) {
             $company = Company::find($company_id);

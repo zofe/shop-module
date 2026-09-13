@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Livewire\Items;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\InventoryItem;
 use App\Modules\Shop\Models\Product;
 use Livewire\Component;

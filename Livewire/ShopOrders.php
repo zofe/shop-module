@@ -4,7 +4,7 @@
 namespace App\Modules\Shop\Livewire;
 
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Order;
 use Livewire\Component;
 

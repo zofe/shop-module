@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Livewire\Subscriptions;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Models\SubscriptionItem;
 use Livewire\Attributes\On;

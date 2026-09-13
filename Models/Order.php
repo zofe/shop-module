@@ -2,10 +2,9 @@
 
 namespace App\Modules\Shop\Models;
 
-use App\Models\User;
-use App\Modules\Companies\Models\Company;
+use Zofe\Rapyd\Modules\Companies\Models\Company;
 use App\Modules\Shop\Cart\Traits\RecalculatesTotals;
-use App\Modules\Workflow\Traits\WorkflowTrait;
+use Zofe\Rapyd\Modules\Workflow\Traits\WorkflowTrait;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -41,7 +40,7 @@ class Order extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(config('auth.providers.users.model'));
     }
 
     public function company()

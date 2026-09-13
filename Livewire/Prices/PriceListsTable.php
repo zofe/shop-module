@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Livewire\Prices;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\PriceList;
 use Livewire\Attributes\On;

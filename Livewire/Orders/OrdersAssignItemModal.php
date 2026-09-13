@@ -2,10 +2,10 @@
 
 namespace App\Modules\Shop\Livewire\Orders;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\InventoryItem;
 use App\Modules\Shop\Models\OrderItemAssignment;
-use App\Modules\Workflow\Models\WorkflowStep;
+use Zofe\Rapyd\Modules\Workflow\Models\WorkflowStep;
 use Livewire\Attributes\On;
 use Livewire\Component;
 

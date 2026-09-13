@@ -5,7 +5,7 @@ namespace App\Modules\Shop\Models;
 
 use App\Modules\Shop\Cart\Contracts\BuyableItem;
 use App\Modules\Shop\Cart\DefaultCalculator;
-use App\Modules\Workflow\Traits\WorkflowTrait;
+use Zofe\Rapyd\Modules\Workflow\Traits\WorkflowTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

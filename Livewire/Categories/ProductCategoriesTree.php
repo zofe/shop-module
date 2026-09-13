@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Livewire\Categories;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\ProductCategory;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;

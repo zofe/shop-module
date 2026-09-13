@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Livewire\Products;
 
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\Product;
 use Livewire\Component;
 use Zofe\Rapyd\Traits\WithDataTable;

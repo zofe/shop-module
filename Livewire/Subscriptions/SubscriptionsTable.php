@@ -4,7 +4,7 @@ namespace App\Modules\Shop\Livewire\Subscriptions;
 
 
 use App\Modules\Shop\Models\Subscription;
-use App\Modules\Auth\Traits\Authorize;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 
 use Livewire\Component;
 use Zofe\Rapyd\Traits\WithDataTable;

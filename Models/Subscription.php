@@ -3,7 +3,6 @@
 namespace App\Modules\Shop\Models;
 
 
-use App\Models\User;
 use App\Modules\Shop\Cart\Traits\RecalculatesTotals;
 use Carbon\Carbon;
 
@@ -34,12 +33,12 @@ class Subscription extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(config('auth.providers.users.model'));
     }
 
     public function company()
     {
-        return $this->belongsTo(\App\Modules\Companies\Models\Company::class);
+        return $this->belongsTo(\Zofe\Rapyd\Modules\Companies\Models\Company::class);
     }
 
     public function items()
