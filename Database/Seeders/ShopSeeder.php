@@ -26,7 +26,12 @@ class ShopSeeder extends Seeder
             ProductCategory::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
         foreach ($data['products'] as $row) {
-            Product::firstOrNew(['id' => $row['id']])->fill($row)->save();
+            $product = Product::firstOrNew(['id' => $row['id']])->fill($row);
+            if (! $product->image_path && ! empty($row['image'])) {
+                $product->image_path = $this->publishImage($row['image']);
+            }
+            unset($product->image);
+            $product->save();
         }
         foreach ($data['price_lists'] as $row) {
             PriceList::firstOrNew(['id' => $row['id']])->fill($row)->save();
@@ -48,5 +53,22 @@ class ShopSeeder extends Seeder
             ])->fill($row)->save();
         }
 
+    }
+
+    /** Copies a demo image (and its _thumb) from this package to the public disk; returns the stored path. */
+    protected function publishImage(string $name): ?string
+    {
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        foreach (['', '_thumb'] as $suffix) {
+            $source = __DIR__ . "/images/{$name}{$suffix}.jpg";
+            if (! is_file($source)) {
+                return null;
+            }
+            if (! $disk->exists("products/{$name}{$suffix}.jpg")) {
+                $disk->put("products/{$name}{$suffix}.jpg", file_get_contents($source));
+            }
+        }
+
+        return "products/{$name}.jpg";
     }
 }

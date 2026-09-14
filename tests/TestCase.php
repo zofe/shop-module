@@ -14,6 +14,7 @@ class TestCase extends Orchestra
     {
         parent::setUp();
         Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Storage::fake('public'); // the seeder publishes demo images
     }
 
     protected function getPackageProviders($app)

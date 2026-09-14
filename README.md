@@ -10,7 +10,8 @@ services assigned to each order line), subscriptions and licences. A module pack
 ```bash
 composer require zofe/shop-module
 php artisan migrate
-php artisan db:seed --class="App\Modules\Shop\Database\Seeders\ShopSeeder"   # two products, two orders
+php artisan storage:link                                                    # product images live on the public disk
+php artisan db:seed --class="App\Modules\Shop\Database\Seeders\ShopSeeder"   # two products with images, two orders
 ```
 
 The seeder attaches the demo orders to the first user of the application.
