@@ -8,7 +8,7 @@
             <x-rpd::card title="Finalize Order">
                 @if(Auth::user())
 
-                    @include('shop::includes.addresses')
+                    @include('shop::includes.addresses', ['selectable' => true])
 
                 @else
 
