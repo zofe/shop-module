@@ -2,12 +2,12 @@
 
 namespace App\Modules\Shop\Livewire\Orders;
 
-use App\Modules\Payments\Dto\CheckoutData;
-use App\Modules\Payments\PaymentsManager;
 use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Payments\PaymentMethods;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
+/** The customer's checkout: the order and the payment methods offered for it. */
 class OrdersCheckoutEmbed extends Component
 {
     public Order $order;
@@ -24,76 +24,38 @@ class OrdersCheckoutEmbed extends Component
         $this->order = $order;
     }
 
-    public function availableGateways(): array
+    public function pay(string $key): void
     {
-        return config('shop.payment_gateways', []);
-    }
-
-    public function initiatePayment(string $gateway): void
-    {
-        if (! array_key_exists($gateway, $this->availableGateways())) {
-            return;
-        }
-
-        if ($this->order->status !== 'pending_payment') {
-            return;
-        }
-
-        if (! class_exists(PaymentsManager::class)) {
-            session()->flash('checkout_message', 'Online payments are not available: the payments module is not installed.');
+        $method = app(PaymentMethods::class)->find($key);
+        if (! $method || $this->order->status !== 'pending_payment' || ! $method->available($this->order)) {
             return;
         }
 
         try {
-            $taxRate = $this->order->tax_rate ?? config('shop.tax', 22);
-            $items = $this->order->items->map(fn ($item) => [
-                'name'         => $item->name,
-                'prd_code'     => $item->prd_code ?? null,
-                'order_item_id' => $item->id,
-                'qty'          => (float) $item->qty,
-                'price'        => (float) $item->price,
-                'subtotal'     => (float) $item->subtotal,
-                'shipping'     => (float) ($item->shipping ?? 0),
-                'discountRate' => (float) ($item->discountRate ?? 0),
-                'discount'     => (float) ($item->discount ?? 0),
-                'taxRate'      => (float) $taxRate,
-                'tax'          => round((float) $item->subtotal * $taxRate / 100, 2),
-                'total'        => round((float) $item->subtotal * (1 + $taxRate / 100), 2),
-            ])->all();
-
-            $data = new CheckoutData(
-                orderId:       $this->order->id,
-                total:         (float) $this->order->total,
-                subtotal:      (float) $this->order->subtotal,
-                tax:           (float) $this->order->tax,
-                shipping:      (float) ($this->order->shipping ?? 0),
-                description:   'Order ' . $this->order->shortId,
-                currency:      config('payments.currency', 'eur'),
-                customerEmail: auth()->user()->email,
-                metadata:      ['order_id' => $this->order->id],
-                items:         $items,
-            );
-
-            $url = app(PaymentsManager::class)->driver($gateway)->initiateCheckout($data);
-
-            $this->redirect($url);
+            $start = $method->start($this->order);
         } catch (\RuntimeException $e) {
             session()->flash('checkout_message', $e->getMessage());
-        } catch (\Exception $e) {
-            Log::error('initiatePayment failed', [
-                'gateway'  => $gateway,
-                'order_id' => $this->order->id,
-                'error'    => $e->getMessage(),
-            ]);
-            session()->flash('checkout_message', 'Payment could not be initiated. Please try again.');
+            return;
+        } catch (\Throwable $e) {
+            Log::error('checkout: ' . $e->getMessage(), ['method' => $key, 'order_id' => $this->order->id, 'exception' => $e]);
+            session()->flash('checkout_message', 'Payment could not be started. Please try again.');
+            return;
         }
+
+        if ($start->url) {
+            $this->redirect($start->url);
+            return;
+        }
+
+        $this->order->refresh();
+        session()->flash('checkout_message', $start->message);
     }
 
     public function render()
     {
         return view('shop::orders.orders_checkout_embed', [
-            'order'    => $this->order,
-            'gateways' => $this->availableGateways(),
+            'order'   => $this->order,
+            'methods' => app(PaymentMethods::class)->for($this->order),
         ]);
     }
 }

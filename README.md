@@ -21,9 +21,17 @@ A customer adds products to the cart, saves a shipping address (the Addresses mo
 order. With `SHOP_CHECKOUT_MODE=immediate` (default) the order goes straight to `pending_payment`; with
 `after_assignment` payment waits until an operator has assigned every delivery item.
 
-Online payments come from `zofe/payments-module` (Stripe, GoCardless, Paddle). Without it the order stays in
-`pending_payment` and the shop tells the customer that payments are not available online: you can handle them by hand
-or implement your own gateway.
+## Payment methods
+
+The checkout page offers the methods of `config('shop.payment_methods')`, classes implementing
+`App\Modules\Shop\Payments\Contracts\PaymentMethod` (`label()`, `available($order)`, `start($order)` returning a
+redirect URL or a message). The shop ships **ManualPayment**: the order moves to *payment verification*, the customer
+reads the instructions of `config('shop.manual_payment')` (bank transfer, a PayPal link you send by hand…) and an
+operator confirms with the *payment done* transition on the order page. No gateway, no subscription.
+
+`zofe/payments-module` (Stripe, GoCardless, Paddle) adds its gateways automatically when installed, with the labels
+of `config('shop.gateway_methods')`; the order is confirmed by its `PaymentConfirmed` event. Your own gateway: one
+class, its name in `payment_methods`.
 
 ## Taxes
 

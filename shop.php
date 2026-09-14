@@ -102,14 +102,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Payment gateways available at checkout
-    |--------------------------------------------------------------------------
-    |
-    | Each entry maps a gateway key (used by payments-module) to its display label and icon.
-    |
-    */
-    /*
-    |--------------------------------------------------------------------------
     | Checkout mode
     |--------------------------------------------------------------------------
     |
@@ -121,7 +113,32 @@ return [
     */
     'checkout_mode' => env('SHOP_CHECKOUT_MODE', 'immediate'),
 
-    'payment_gateways' => [
+    /*
+    |--------------------------------------------------------------------------
+    | Payment methods
+    |--------------------------------------------------------------------------
+    |
+    | Classes implementing App\Modules\Shop\Payments\Contracts\PaymentMethod,
+    | offered on the checkout page in this order. ManualPayment needs no
+    | gateway: the order waits for an operator to confirm the payment.
+    | zofe/payments-module adds its gateways (see gateway_methods) when installed.
+    |
+    */
+    'payment_methods' => [
+        App\Modules\Shop\Payments\ManualPayment::class,
+    ],
+
+    'manual_payment' => [
+        'enabled'      => env('SHOP_MANUAL_PAYMENT', true),
+        'label'        => 'Bank transfer',
+        'description'  => 'We will send you the payment details',
+        'icon'         => 'fa-university',
+        // {order}, {total} and {email} are replaced
+        'instructions' => 'Thank you. Your order {order} of {total} is registered: we will contact you at {email} with the payment details.',
+    ],
+
+    // Labels of the zofe/payments-module gateways on the checkout page
+    'gateway_methods' => [
         'stripe' => [
             'label' => 'Credit / Debit Card',
             'description' => 'Pay securely via Stripe',

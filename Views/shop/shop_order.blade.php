@@ -35,7 +35,7 @@
                 <x-rpd::breadcrumbs class="breadcrumb-item" active="active" />
             </div>
 
-            @if($order->status === 'pending_payment' && auth()->id() === $order->user_id)
+            @if(in_array($order->status, ['pending_payment', 'payment_verification']) && auth()->id() === $order->user_id)
 
                 <livewire:shop::orders.orders-checkout-embed :order="$order" />
 

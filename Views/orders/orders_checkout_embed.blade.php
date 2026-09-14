@@ -6,7 +6,11 @@
         </div>
     @endif
 
-    @if($order->status !== 'pending_payment')
+    @if($order->status === 'payment_verification')
+        <div class="alert alert-success mb-3">
+            <i class="fas fa-check-circle me-1"></i> Your order is registered and awaiting payment confirmation.
+        </div>
+    @elseif($order->status !== 'pending_payment')
         <div class="alert alert-warning mb-0">
             This order is not awaiting payment (current status: <strong>{{ $order->status }}</strong>).
         </div>
@@ -59,28 +63,32 @@
             </table>
         </x-rpd::card>
 
-        <x-rpd::card title="Choose a payment method" class="mt-3">
-            <div class="d-grid gap-2">
-                @forelse($gateways as $key => $gateway)
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary d-flex align-items-center gap-3 py-3 px-4 text-start"
-                        wire:click="initiatePayment('{{ $key }}')"
-                        wire:loading.attr="disabled"
-                        wire:target="initiatePayment('{{ $key }}')"
-                    >
-                        <i class="fas {{ $gateway['icon'] }} fa-lg text-primary" style="width:24px"></i>
-                        <div>
-                            <div class="fw-semibold">{{ $gateway['label'] }}</div>
-                            <div class="small text-muted">{{ $gateway['description'] }}</div>
-                        </div>
-                        <i class="fas fa-chevron-right ms-auto text-muted"></i>
-                    </button>
-                @empty
-                    <p class="text-muted small mb-0">No payment methods configured.</p>
-                @endforelse
+        @if($methods->isNotEmpty())
+            <x-rpd::card title="Choose a payment method" class="mt-3">
+                <div class="d-grid gap-2">
+                    @foreach($methods as $key => $method)
+                        <button
+                            type="button"
+                            class="btn btn-outline-primary d-flex align-items-center gap-3 py-3 px-4 text-start"
+                            wire:click="pay('{{ $key }}')"
+                            wire:loading.attr="disabled"
+                            wire:target="pay('{{ $key }}')"
+                        >
+                            <i class="fas {{ $method->icon() }} fa-lg text-primary" style="width:24px"></i>
+                            <div>
+                                <div class="fw-semibold">{{ $method->label() }}</div>
+                                <div class="small text-muted">{{ $method->description() }}</div>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto text-muted"></i>
+                        </button>
+                    @endforeach
+                </div>
+            </x-rpd::card>
+        @else
+            <div class="alert alert-success mt-3 mb-0">
+                <i class="fas fa-check-circle me-1"></i> Your order is registered. We will contact you for the payment.
             </div>
-        </x-rpd::card>
+        @endif
 
     @endif
 </div>

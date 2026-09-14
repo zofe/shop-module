@@ -9,6 +9,8 @@ use App\Modules\Shop\Listeners\OrderWorkflowSubscriber;
 use App\Modules\Shop\Listeners\PaymentConfirmedListener;
 use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\OrderItemAssignment;
+use App\Modules\Shop\Payments\GatewayPaymentMethod;
+use App\Modules\Shop\Payments\PaymentMethods;
 use App\Modules\Shop\Tax\Contracts\TaxResolver;
 use App\Modules\Shop\Tax\Contracts\ViesClient;
 use App\Modules\Shop\Tax\EuVatResolver;
@@ -52,6 +54,16 @@ class ShopServiceProvider extends RapydModuleServiceProvider
             };
         });
         $this->app->singleton(TaxManager::class);
+
+        $this->app->singleton(PaymentMethods::class, function () {
+            $methods = new PaymentMethods();
+            if (class_exists(\App\Modules\Payments\PaymentsManager::class)) {
+                foreach (config('shop.gateway_methods', []) as $driver => $meta) {
+                    $methods->register(new GatewayPaymentMethod($driver, $meta));
+                }
+            }
+            return $methods;
+        });
 
         Relation::morphMap(config('shop.deliverable_types', []), true);
         Relation::morphMap([
