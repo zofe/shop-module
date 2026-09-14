@@ -27,12 +27,23 @@ class OrderWorkflowSubscriber
     }
 
 
-    /** payment_done reached (a gateway or an operator): recurring lines become / extend a subscription. */
+    /** pay_order: the order is due, a local payment record is opened (pending until confirmed). */
+    public function onPayOrder($event)
+    {
+        /** @var Order $order */
+        $order = $event->getSubject();
+        app(\App\Modules\Shop\Payments\Contracts\PaymentRecorder::class)->pending($order->fresh());
+    }
+
+    /** payment_done reached by an operator: the pending payment record is confirmed by hand. */
     public function onPaymentDone($event)
     {
         /** @var Order $order */
         $order = $event->getSubject();
-        \App\Modules\Shop\Services\SubscriptionService::onOrderPaid($order->fresh());
+        $recorder = app(\App\Modules\Shop\Payments\Contracts\PaymentRecorder::class);
+        if ($payment = $recorder->findPending($order->fresh())) {
+            $recorder->confirm($payment, 'manual');
+        }
     }
 
     public function onGuardCompleteOrder($event)
@@ -60,6 +71,10 @@ class OrderWorkflowSubscriber
         // workflow.[workflow name].enter.[place name]
         // workflow.[workflow name].completed.[transition name]
 
+        $events->listen(
+            'workflow.order.completed.pay_order',
+            'App\Modules\Shop\Listeners\OrderWorkflowSubscriber@onPayOrder'
+        );
         $events->listen(
             'workflow.order.completed.payment_done',
             'App\Modules\Shop\Listeners\OrderWorkflowSubscriber@onPaymentDone'

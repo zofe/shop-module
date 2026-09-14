@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Payments;
 
-use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Payments\Contracts\Payable;
 use App\Modules\Shop\Payments\Contracts\PaymentMethod;
 
 /**
@@ -38,8 +38,8 @@ class GatewayPaymentMethod implements PaymentMethod
         return $this->meta['icon'] ?? 'fa-credit-card';
     }
 
-    /** The module is installed and the driver has its credentials. */
-    public function available(Order $order): bool
+    /** The module is installed, the driver has its credentials, and it sells what this is (Paddle: digital only). */
+    public function available(Payable $payable): bool
     {
         if (! class_exists(\App\Modules\Payments\PaymentsManager::class)) {
             return false;
@@ -48,40 +48,31 @@ class GatewayPaymentMethod implements PaymentMethod
         if (isset($config['enabled']) && ! $config['enabled']) {
             return false;
         }
+        if ($this->driver === 'paddle' && collect($payable->payableItems())->contains(fn ($i) => ($i['deliverable_type'] ?? null) === 'inventory_item')) {
+            return false;
+        }
         $credential = $config['secret'] ?? $config['token'] ?? $config['vendor_auth_code'] ?? null;
 
         return ! empty($credential);
     }
 
-    public function start(Order $order): PaymentStart
+    public function start(Payable $payable, ?object $payment = null): PaymentStart
     {
-        $taxRate = (float) ($order->tax_rate ?? config('shop.tax', 22));
-        $items = $order->items->map(fn ($item) => [
-            'name'          => $item->name,
-            'prd_code'      => $item->prd_code ?? null,
-            'order_item_id' => $item->id,
-            'qty'           => (float) $item->qty,
-            'price'         => (float) $item->price,
-            'subtotal'      => (float) $item->subtotal,
-            'shipping'      => (float) ($item->shipping ?? 0),
-            'discountRate'  => (float) ($item->discountRate ?? 0),
-            'discount'      => (float) ($item->discount ?? 0),
-            'taxRate'       => $taxRate,
-            'tax'           => round((float) $item->subtotal * $taxRate / 100, 2),
-            'total'         => round((float) $item->subtotal * (1 + $taxRate / 100), 2),
-        ])->all();
+        $amounts = $payable->payableAmounts();
+        $links = $payable->payableLinks();
 
         $data = new \App\Modules\Payments\Dto\CheckoutData(
-            orderId:       $order->id,
-            total:         (float) $order->total,
-            subtotal:      (float) $order->subtotal,
-            tax:           (float) $order->tax,
-            shipping:      (float) ($order->shipping ?? 0),
-            description:   'Order ' . $order->shortId,
+            orderId:       $links['order_id'] ?? $links['subscription_id'] ?? $links['ref_subscription_id'] ?? $payable->payableId(),
+            total:         (float) ($amounts['total'] ?? 0),
+            subtotal:      (float) ($amounts['subtotal'] ?? 0),
+            tax:           (float) ($amounts['tax'] ?? 0),
+            shipping:      (float) ($amounts['shipping'] ?? 0),
+            description:   $payable->payableDescription(),
             currency:      config('payments.currency', 'eur'),
-            customerEmail: $order->user?->email,
-            metadata:      ['order_id' => $order->id],
-            items:         $items,
+            customerEmail: $payable->payableCustomerEmail(),
+            metadata:      array_merge($links, ['payable' => $payable->payableType()]),
+            items:         $payable->payableItems(),
+            paymentId:     $payment?->id,
         );
 
         return PaymentStart::redirect(app(\App\Modules\Payments\PaymentsManager::class)->driver($this->driver)->initiateCheckout($data));

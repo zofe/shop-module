@@ -133,23 +133,21 @@ return [
         'label'        => 'Bank transfer',
         'description'  => 'We will send you the payment details',
         'icon'         => 'fa-university',
-        // {order}, {total} and {email} are replaced
-        'instructions' => 'Thank you. Your order {order} of {total} is registered: we will contact you at {email} with the payment details.',
+        // {description}, {total} and {email} are replaced
+        'instructions' => 'Thank you. {description} ({total}) is registered: we will contact you at {email} with the payment details.',
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Subscriptions
     |--------------------------------------------------------------------------
-    | Recurring lines (monthly / yearly prices) of a paid order become a
-    | Subscription with its items. managed_by:
-    |   shop    : the shop bills the renewals (a renewal order per period,
-    |             `php artisan shop:renew-subscriptions` daily) and you invoice
-    |   stripe… : a gateway charges the customer; the shop only mirrors the
-    |             subscription and records the payments its webhooks report
+    | "Subscribe" on a product sold as a monthly / yearly fee creates a
+    | Subscription with its items and the first pending payment; every period
+    | `php artisan shop:bill-subscriptions` (daily) creates the next one. A
+    | pending payment older than grace_days marks the subscription past due.
     */
     'subscriptions' => [
-        'managed_by' => env('SHOP_SUBSCRIPTIONS_MANAGED_BY', 'shop'),
+        'grace_days' => (int) env('SHOP_SUBSCRIPTION_GRACE_DAYS', 7),
     ],
 
     // Labels of the zofe/payments-module gateways on the checkout page

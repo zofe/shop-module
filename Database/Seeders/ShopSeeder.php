@@ -33,6 +33,12 @@ class ShopSeeder extends Seeder
             unset($product->image);
             $product->save();
         }
+        foreach ($data['product_variants'] ?? [] as $row) {
+            \App\Modules\Shop\Models\ProductVariant::firstOrNew(['id' => $row['id']])->fill($row)->save();
+        }
+        foreach ($data['product_bundle_items'] ?? [] as $row) {
+            \App\Modules\Shop\Models\ProductBundleItem::firstOrCreate($row);
+        }
         foreach ($data['price_lists'] as $row) {
             PriceList::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }

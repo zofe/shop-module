@@ -20,9 +20,10 @@
                     </thead>
                     <tbody>
                     @foreach($subscription->items as $item)
-                        <tr wire:key="si-{{ $item->id }}">
+                        <tr wire:key="si-{{ $item->id }}" class="{{ $item->bundle_code ? 'text-muted small' : '' }}">
                             <td>{{ $item->prd_code }}</td>
-                            <td>{{ $item->name }}</td>
+                            <td>{{ $item->bundle_code ? '↳ ' : '' }}{{ $item->name }}
+                                @if(! $item->bundle_code)<x-rpd::icon name="trash-alt" click="removeItem({{ $item->id }})" confirm="Remove {{ $item->name }}?" />@endif</td>
                             <td><span class="badge bg-secondary">{{ $item->period }}</span></td>
                             <td class="text-end">{{ number_format($item->price, 2) }} {{ Cart::currency() }}</td>
                             <td class="text-end">{{ $item->qty }}</td>
@@ -36,42 +37,37 @@
                     <tr><td colspan="4"></td><td class="text-end"><strong>Total / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td></tr>
                     </tfoot>
                 </table>
+                @if(count($addable))
+                    <div class="row align-items-end">
+                        <x-rpd::select-list col="col-md-8" model="newItem" :options="$addable" placeholder="Add a fee…" label="Add to the subscription" />
+                        <div class="col-md-4 pb-3"><x-rpd::button size="sm" color="outline-primary" label="Add" icon="plus" click="addItem" /></div>
+                    </div>
+                @endif
             </x-rpd::card>
 
-            <x-rpd::card title="Orders">
-                <table class="table table-sm">
-                    <thead><tr><th>Order</th><th>Kind</th><th>Status</th><th>Created</th><th class="text-end">Total</th></tr></thead>
-                    <tbody>
-                    @foreach(collect([$subscription->order])->filter()->merge($subscription->renewals) as $order)
-                        <tr wire:key="so-{{ $order->id }}">
-                            <td><a href="{{ route('orders.view', $order) }}">{{ $order->shortId }}</a></td>
-                            <td>{{ $order->kind }}</td>
-                            <td>{{ $order->status }}</td>
-                            <td><x-rpd::date-formatted :date="$order->created_at" /></td>
-                            <td class="text-end">{{ number_format($order->total, 2) }} {{ Cart::currency() }}</td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </x-rpd::card>
-
-            @if($hasPayments)
+            @if($hasRecorder)
                 <x-rpd::card title="Payments">
-                    @if($payments->isEmpty())
+                    @if(count($payments) === 0)
                         <div class="text-muted small">No payment recorded yet.</div>
                     @else
                         <table class="table table-sm">
-                            <thead><tr><th>Payment</th><th>Description</th><th>Gateway</th><th>Status</th><th>Date</th><th class="text-end">Total</th></tr></thead>
+                            <thead><tr><th>Payment</th><th>Description</th><th>Gateway</th><th>Status</th><th>Date</th><th class="text-end">Total</th><th></th></tr></thead>
                             <tbody>
                             @foreach($payments as $payment)
                                 <tr wire:key="sp-{{ $payment->id }}">
                                     <td>@if(Route::has('payments.view'))<a href="{{ route('payments.view', $payment) }}">{{ $payment->shortId ?? substr($payment->id, 0, 8) }}</a>@else{{ substr($payment->id, 0, 8) }}@endif
-                                        @if($payment->ref_subscription_id)<span class="badge bg-light text-dark">renewal</span>@endif</td>
+                                        @if($payment->ref_subscription_id)<span class="badge bg-light text-dark">renewal</span>@else<span class="badge bg-light text-dark">first</span>@endif</td>
                                     <td class="small">{{ $payment->description }}</td>
-                                    <td>{{ $payment->gateway }}</td>
-                                    <td>{{ $payment->status }}</td>
-                                    <td>{{ $payment->payment_date?->format('Y-m-d') ?? $payment->created_at->format('Y-m-d') }}</td>
+                                    <td>{{ $payment->gateway ?? '—' }}</td>
+                                    <td><span class="badge bg-{{ $payment->status === 'confirmed' ? 'success' : ($payment->status === 'failed' ? 'danger' : 'warning text-dark') }}">{{ $payment->status }}</span></td>
+                                    <td>{{ ($payment->payment_date ?? $payment->created_at)?->format('Y-m-d') }}</td>
                                     <td class="text-end">{{ number_format($payment->total, 2) }} {{ Cart::currency() }}</td>
+                                    <td class="text-end text-nowrap">
+                                        @if($payment->status === 'pending')
+                                            <x-rpd::button size="xsm" color="outline-success" label="mark paid" click="markPaid('{{ $payment->id }}')" />
+                                            <x-rpd::button size="xsm" color="outline-danger" label="failed" click="markFailed('{{ $payment->id }}')" />
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                             </tbody>
@@ -90,25 +86,22 @@
                     <dd class="col-7">{{ $subscription->period }}</dd>
                     <dt class="col-5">Started</dt>
                     <dd class="col-7">{{ $subscription->start_date?->format('Y-m-d') }}</dd>
+                    @if($subscription->trial_ends_at)
+                        <dt class="col-5">Trial ends</dt>
+                        <dd class="col-7">{{ $subscription->trial_ends_at->format('Y-m-d') }}</dd>
+                    @endif
                     <dt class="col-5">Next billing</dt>
                     <dd class="col-7">{{ $subscription->next_billing_at?->format('Y-m-d') ?? '—' }}</dd>
                     @if($subscription->ends_at)
                         <dt class="col-5">Ends</dt>
                         <dd class="col-7">{{ $subscription->ends_at->format('Y-m-d') }}</dd>
                     @endif
-                    <dt class="col-5">Managed by</dt>
-                    <dd class="col-7">
-                        @if($subscription->isManagedByShop())
-                            the shop <span class="text-muted small">(renewal orders)</span>
-                        @else
-                            <span class="badge bg-info text-dark">{{ $subscription->managed_by }}</span>
-                            @if($subscription->gateway_ref)<div class="small text-muted">{{ $subscription->gateway_ref }}</div>@endif
-                        @endif
-                    </dd>
+                    <dt class="col-5">Collected by</dt>
+                    <dd class="col-7">{{ $subscription->gateway ?? '—' }}@if($subscription->gateway_ref)<div class="small text-muted">{{ $subscription->gateway_ref }}</div>@endif</dd>
                 </dl>
 
-                @if($subscription->isManagedByShop() && $subscription->isActive())
-                    <x-rpd::button size="sm" color="outline-primary" label="Renewal order now" icon="sync" click="renewNow" />
+                @if($hasRecorder && ! $pending && $subscription->isActive())
+                    <x-rpd::button size="sm" color="outline-primary" label="Bill the next period now" icon="file-invoice-dollar" click="billNow" />
                 @endif
 
                 <livewire:workflow::workflow-table-embed

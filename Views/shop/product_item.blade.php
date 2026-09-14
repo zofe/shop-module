@@ -9,15 +9,17 @@
             </a>
         @endif
         <div class="card-body d-flex flex-column">
-            <h5 class="card-title">{{ $price->product->name }}</h5>
+            <h5 class="card-title">{{ $price->name }}</h5>
             @if($price->product->description)
                 <p class="card-text text-muted small flex-grow-1">{!! Str::limit(strip_tags($price->product->description), 120) !!}</p>
             @endif
             <div class="d-flex align-items-center justify-content-between mt-3">
-                @if($price->price_onetime_customer > 0)
-                    <span class="fw-bold">{{ number_format($price->price_onetime_customer, 2) }} {{ Cart::currency() }}</span>
-                @elseif($price->price_monthly_customer > 0)
-                    <span class="fw-bold">{{ number_format($price->price_monthly_customer, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">/mo</small></span>
+                @if($price->isPurchasable())
+                    <span class="fw-bold">{{ number_format($price->price_onetime, 2) }} {{ Cart::currency() }}</span>
+                @elseif($fee = $price->fee('monthly'))
+                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">/mo</small></span>
+                @elseif($fee = $price->fee('yearly'))
+                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">/yr</small></span>
                 @else
                     <span class="text-muted small">Contact us</span>
                 @endif

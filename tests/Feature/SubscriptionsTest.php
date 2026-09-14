@@ -3,6 +3,7 @@
 namespace App\Modules\Shop\Tests\Feature;
 
 use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Models\PriceList;
 use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Services\OrderService;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Artisan;
 use Livewire\Livewire;
 use Zofe\Rapyd\Modules\Auth\Database\Seeders\AuthSeeder;
 
+/**
+ * The subscription flow, separate from the cart. Without zofe/payments-module the
+ * recorder is the NullRecorder: no payment records, the workflow carries the state.
+ */
 class SubscriptionsTest extends TestCase
 {
     use DatabaseMigrations;
@@ -25,126 +30,160 @@ class SubscriptionsTest extends TestCase
     {
         parent::setUp();
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
+        $this->seed(AuthSeeder::class);   // roles: a registered customer gets "customer" (edit own users → their addresses)
         $this->user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $this->user->addresses()->create(['address' => 'Via Roma 1', 'city' => 'Bari', 'zipcode' => '70100', 'country_code' => 'IT']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web'])
+            ->givePermissionTo(\Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'edit own users', 'guard_name' => 'web']));
+        $this->user->assignRole('customer');
         config(['shop.tax_resolver' => 'flat', 'shop.tax' => 22]);
     }
 
-    /** The support plan (item 2) added for a period, the order paid. */
-    protected function paidOrder(string $period = 'monthly'): Order
+    public function test_the_price_list_says_how_a_product_is_sold()
     {
-        app('cart')->destroy();
-        app('cart')->add(PriceListItem::find(2), ['period' => $period], 1);
-        $order = OrderService::createOrderFromCart(null, $this->user->id);
-        $workflow = \Workflow::get($order, 'order');
-        foreach (['pay_order', 'check_payment', 'payment_done'] as $t) {
-            $workflow->apply($order, $t);
-            $order->save();
-        }
+        $licence = PriceListItem::find(1);   // 5 users
+        $this->assertTrue($licence->isPurchasable());
+        $this->assertSame([], $licence->fees());
+        $this->assertSame('Rapyd Admin — Professional License — 5 users', $licence->name);
+        $this->assertSame('RPD-PRO-5', $licence->sku);
+        $this->assertSame(499.0, PriceListItem::find(3)->getBuyablePrice(), 'the 20 users variant');
 
-        return $order->fresh();
-    }
-
-    public function test_a_price_list_item_knows_its_periods_and_the_cart_prices_them()
-    {
         $support = PriceListItem::find(2);
-        $this->assertSame(['monthly' => 14.9, 'yearly' => 149.0], $support->periods());
-        $this->assertSame(['onetime' => 299.0], PriceListItem::find(1)->periods());
+        $this->assertFalse($support->isPurchasable());
+        $this->assertSame(['monthly' => 14.9, 'yearly' => 149.0], $support->fees());
+        $this->assertSame(20.0, $support->activationPrice());
 
-        app('cart')->add($support, ['period' => 'yearly'], 1);
-        $item = app('cart')->content()->first();
-        $this->assertSame([149.0, 'yearly'], [(float) $item->price, $item->options->period]);
+        $this->assertSame(14, PriceListItem::find(4)->trial_days);
+        $this->assertTrue(PriceListItem::find(5)->product->isBundle());
+        $this->assertSame(PriceListItem::find(1)->id, PriceList::default()->itemFor(1, 1)->id);
     }
 
-    public function test_paying_an_order_with_a_recurring_line_creates_the_subscription()
+    public function test_the_cart_sells_one_time_products_only()
+    {
+        app('cart')->add(PriceListItem::find(3), [], 1);
+        $this->assertSame(499.0, (float) app('cart')->content()->first()->price);
+
+        app('cart')->add(PriceListItem::find(2), [], 1);   // a fee: 0 in the cart, it is not a purchase
+        $this->assertSame(0.0, (float) app('cart')->content()->last()->price);
+    }
+
+    public function test_subscribe_creates_the_subscription_with_its_items_pending_the_first_payment()
     {
         Carbon::setTestNow('2026-09-14');
-        $order = $this->paidOrder('monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
 
-        $this->assertSame('payment_done', $order->status);
-        $this->assertNotNull($order->subscription_id);
-        $subscription = $order->subscription;
-        $this->assertSame(['monthly', 'active', 'shop', '2026-09-14', '2026-10-14'], [
-            $subscription->period, $subscription->status, $subscription->managed_by,
-            $subscription->start_date->toDateString(), $subscription->next_billing_at->toDateString(),
+        $this->assertSame(['monthly', 'pending', '2026-09-14', '2026-09-14'], [
+            $subscription->period, $subscription->status, $subscription->start_date->toDateString(), $subscription->next_billing_at->toDateString(),
         ]);
-        $this->assertSame($order->id, $subscription->order_id);
         $this->assertCount(1, $subscription->items);
         $item = $subscription->items->first();
-        $this->assertSame(['RPD-SUP-YEAR', 'monthly', 14.9, 1], [$item->prd_code, $item->period, (float) $item->price, (int) $item->qty]);
-        $this->assertSame($order->items->first()->id, $item->order_item_id);
+        $this->assertSame(['RPD-SUP', 'monthly', 14.9, 1, 22.0], [$item->prd_code, $item->period, (float) $item->price, (int) $item->qty, (float) $item->taxRate]);
         $this->assertEqualsWithDelta(14.9 * 1.22, $subscription->total, 0.01);
+        $this->assertSame(0, Order::where('user_id', $this->user->id)->count(), 'no order is involved');
 
-        // paying again (a second webhook) does not create another one
-        SubscriptionService::onOrderPaid($order->fresh());
-        $this->assertSame(1, Subscription::count());
+        // the first period as a payable: the fee plus the activation
+        $subscription->firstPeriod = true;
+        $this->assertEqualsWithDelta((14.9 + 20) * 1.22, $subscription->payableAmounts()['total'], 0.01);
+        $this->assertCount(2, $subscription->payableItems());
+        $this->assertSame(['subscription_id' => $subscription->id], $subscription->payableLinks());
+        $subscription->firstPeriod = false;
+        $this->assertSame(['ref_subscription_id' => $subscription->id], $subscription->payableLinks());
         Carbon::setTestNow();
     }
 
-    public function test_one_time_lines_create_no_subscription()
-    {
-        $address = $this->user->addresses()->first();
-        app('cart')->add(PriceListItem::find(1), ['period' => 'onetime'], 1);
-        $order = OrderService::createOrderFromCart(null, $this->user->id, null, $address->id);
-        $this->assertNull(SubscriptionService::onOrderPaid($order));
-        $this->assertSame(0, Subscription::count());
-    }
-
-    public function test_the_renewal_command_creates_an_order_when_the_billing_date_comes_and_its_payment_extends_the_subscription()
+    public function test_a_confirmed_payment_activates_and_extends_the_subscription()
     {
         Carbon::setTestNow('2026-09-14');
-        $subscription = $this->paidOrder('yearly')->subscription;
-        $this->assertSame('2027-09-14', $subscription->next_billing_at->toDateString());
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'yearly');
 
-        Artisan::call('shop:renew-subscriptions', ['--date' => '2027-09-13']);
-        $this->assertStringContainsString('0 renewal', Artisan::output(), 'not yet');
+        SubscriptionService::paymentConfirmed($subscription);
+        $this->assertSame(['active', '2027-09-14'], [$subscription->status, $subscription->next_billing_at->toDateString()]);
 
-        Artisan::call('shop:renew-subscriptions', ['--date' => '2027-09-14']);
-        $this->assertStringContainsString('1 renewal', Artisan::output());
-        $renewal = $subscription->renewals()->first();
-        $this->assertSame(['renewal', 'pending_payment', 149.0], [$renewal->kind, $renewal->status, (float) $renewal->subtotal]);
-        $this->assertSame('yearly', $renewal->items->first()->period);
+        $this->assertSame(0, Subscription::dueForBilling(Carbon::parse('2027-09-13'))->count());
+        $this->assertSame(1, Subscription::dueForBilling(Carbon::parse('2027-09-14'))->count());
 
-        Artisan::call('shop:renew-subscriptions', ['--date' => '2027-09-14']);
-        $this->assertStringContainsString('0 renewal', Artisan::output(), 'a pending renewal is not duplicated');
-
-        $workflow = \Workflow::get($renewal, 'order');
-        foreach (['check_payment', 'payment_done'] as $t) {
-            $workflow->apply($renewal, $t);
-            $renewal->save();
-        }
+        SubscriptionService::paymentConfirmed($subscription);
         $this->assertSame('2028-09-14', $subscription->fresh()->next_billing_at->toDateString());
-        $this->assertSame(1, Subscription::count(), 'a renewal never creates a new subscription');
         Carbon::setTestNow();
     }
 
-    public function test_subscriptions_managed_by_a_gateway_are_not_renewed_by_the_shop()
+    public function test_a_trial_starts_free_and_is_billed_at_its_end()
     {
         Carbon::setTestNow('2026-09-14');
-        config(['shop.subscriptions.managed_by' => 'stripe']);
-        $subscription = $this->paidOrder('monthly')->subscription;
-        $this->assertSame('stripe', $subscription->managed_by);
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(4), 'monthly');
+        $this->assertSame(['trialing', '2026-09-28', '2026-09-28'], [$subscription->status, $subscription->trial_ends_at->toDateString(), $subscription->next_billing_at->toDateString()]);
 
-        Artisan::call('shop:renew-subscriptions', ['--date' => '2026-12-01']);
-        $this->assertStringContainsString('0 renewal', Artisan::output());
+        Artisan::call('shop:bill-subscriptions', ['--date' => '2026-09-27']);
+        $this->assertSame('trialing', $subscription->fresh()->status);
+
+        Artisan::call('shop:bill-subscriptions', ['--date' => '2026-09-28']);
+        $this->assertSame('pending', $subscription->fresh()->status, 'the trial is over, the first payment is due');
+
+        SubscriptionService::paymentConfirmed($subscription->fresh());
+        $this->assertSame(['active', '2026-10-28'], [$subscription->fresh()->status, $subscription->fresh()->next_billing_at->toDateString()]);
         Carbon::setTestNow();
     }
 
-    public function test_cancel_and_the_admin_pages()
+    public function test_unpaid_subscriptions_go_past_due_after_the_grace_period_and_cancel_ends_them()
     {
-        $subscription = $this->paidOrder('monthly')->subscription;
-        $this->seed(AuthSeeder::class);
-        $this->actingAs(User::where('email', 'admin@laravel')->firstOrFail());
+        Carbon::setTestNow('2026-09-14');
+        config(['shop.subscriptions.grace_days' => 7]);
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        SubscriptionService::paymentConfirmed($subscription);   // active until 2026-10-14
 
-        $this->get(route('subscriptions.table'))->assertOk()->assertSee($subscription->shortId)->assertSee('monthly');
-        $this->get(route('subscriptions.view', $subscription))->assertOk()->assertSee('RPD-SUP-YEAR')->assertSee('Next billing');
+        Artisan::call('shop:bill-subscriptions', ['--date' => '2026-10-20']);
+        $this->assertSame('active', $subscription->fresh()->status, 'within the grace period');
+        Artisan::call('shop:bill-subscriptions', ['--date' => '2026-10-21']);
+        $this->assertSame('past_due', $subscription->fresh()->status);
 
-        Livewire::test('shop::subscriptions.subscriptions-view', ['subscription' => $subscription])
-            ->call('renewNow')->assertRedirect();
-        $this->assertSame(1, $subscription->renewals()->count());
+        SubscriptionService::paymentConfirmed($subscription->fresh());
+        $this->assertSame('active', $subscription->fresh()->status);
 
-        SubscriptionService::cancel($subscription);
+        SubscriptionService::cancel($subscription->fresh());
         $this->assertSame('cancelled', $subscription->fresh()->status);
-        $this->assertSame(0, Subscription::dueForRenewal(now()->addYear())->count());
+        $this->assertSame(0, Subscription::dueForBilling(Carbon::parse('2030-01-01'))->count());
+        Carbon::setTestNow();
+    }
+
+    public function test_a_bundle_fee_adds_its_components_at_zero_and_items_can_be_added_and_removed()
+    {
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(5), 'monthly');
+        $this->assertCount(3, $subscription->items, 'the bundle line and its two components');
+        $this->assertSame([17.9, 0.0, 0.0], $subscription->items->pluck('price')->map(fn ($p) => (float) $p)->all());
+        $this->assertEqualsWithDelta(17.9 * 1.22, $subscription->total, 0.01);
+
+        $line = SubscriptionService::addItem($subscription, PriceListItem::find(2));
+        $this->assertEqualsWithDelta((17.9 + 14.9) * 1.22, $subscription->fresh()->total, 0.01);
+
+        SubscriptionService::removeItem($subscription->items()->whereNull('bundle_code')->orWhere('bundle_code', 0)->where('price', '>', 15)->first());
+        $this->assertEqualsWithDelta(14.9 * 1.22, $subscription->fresh()->total, 0.01, 'bundle and its components gone');
+        $this->assertCount(1, $subscription->fresh()->items);
+    }
+
+    public function test_the_customer_and_admin_pages()
+    {
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+
+        $this->actingAs($this->user);
+        $this->get(route('shop.subscriptions'))->assertOk()->assertSee($subscription->shortId);
+        $this->get(route('shop.subscription', $subscription))->assertOk()->assertSee('RPD-SUP')->assertSee('Payment due');
+
+        $other = User::create(['name' => 'Bob', 'email' => 'bob@example.com', 'password' => 'x']);
+        Livewire::actingAs($other)->test('shop::shop-subscription', ['subscription' => $subscription])->assertForbidden();
+
+        $this->actingAs(User::where('email', 'admin@laravel')->firstOrFail());
+        $this->get(route('subscriptions.table'))->assertOk()->assertSee($subscription->shortId);
+        $this->get(route('subscriptions.view', $subscription))->assertOk()->assertSee('RPD-SUP')->assertSee('Next billing');
+    }
+
+    public function test_subscribe_from_the_product_page()
+    {
+        $this->actingAs($this->user);
+        Livewire::test('shop::shop', ['slugs' => 'support-services/priority-support'])
+            ->assertSee('Subscribe per month')
+            ->assertSee('activation, once')
+            ->call('subscribe', 'yearly')
+            ->assertRedirect();
+        $this->assertSame(1, Subscription::where('user_id', $this->user->id)->where('period', 'yearly')->count());
     }
 }

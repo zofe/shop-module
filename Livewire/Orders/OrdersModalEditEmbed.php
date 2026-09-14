@@ -38,10 +38,10 @@ class OrdersModalEditEmbed extends Component
     {
         $item = PriceListItem::findOrFail($this->new_item);
         $this->qty = 1;
-        $this->price = $item->product->isService ? $item->price_yearly_customer : $item->price_onetime_customer;
+        $this->price = $item->getBuyablePrice();
         $this->shipping = $item->shipping?:0;
-        $this->prd_code = $item->product->sku;
-        $this->name =  $item->product->name;
+        $this->prd_code = $item->sku;
+        $this->name =  $item->name;
     }
 
     public function booted()

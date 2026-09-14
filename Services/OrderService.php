@@ -10,6 +10,7 @@ use App\Modules\Shop\Models\Order;
 use App\Modules\Shop\Models\OrderItem;
 use App\Modules\Shop\Models\OrderItemAssignment;
 use App\Modules\Shop\Models\PriceList;
+use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Tax\Tax;
 use Illuminate\Support\Facades\DB;
 
@@ -114,29 +115,49 @@ class OrderService
 
         /** @var CartItem $item */
         foreach (Cart::content() as $item) {
+            $listItem = $item->model instanceof PriceListItem ? $item->model : null;
+            $product = $listItem?->product;
 
-
-
-            //$deliverableType = config("shop.deliverable_types.{$item->model->product->type}");
-            $deliverableType = $item->model->product->type;
             $orderItem = new OrderItem([
-                'order_id' => $order->id,
-                'price_list_item_id' => $item->id,
-                'deliverable_type' => $deliverableType,
-                'prd_code' => $item->getSku(),
-                'name' => $item->name,
-                'qty' => $item->qty,
-                'price' => $item->price, //+ $item->priceActivation,
-                'subtotal' => $item->subtotal,
-                'discountRate' => $item->discountRate,
-                'taxRate' => $order->tax_rate ?? $item->taxRate,
-                'period' => $item->options['period'] ?? 'onetime',
-                'shipping' => $item->shipping,
-                'bundle_code' => isset($item->options['bundle_code']) ? $item->options['bundle_code'] : 0,
+                'order_id'           => $order->id,
+                'price_list_item_id' => $listItem?->id ?? $item->id,
+                'product_variant_id' => $listItem?->product_variant_id,
+                'deliverable_type'   => $product?->deliverableType(),
+                'prd_code'           => $item->getSku(),
+                'name'               => $item->name,
+                'qty'                => $item->qty,
+                'price'              => $item->price,
+                'subtotal'           => $item->subtotal,
+                'discountRate'       => $item->discountRate,
+                'taxRate'            => $order->tax_rate ?? $item->taxRate,
+                'shipping'           => $item->shipping,
+                'bundle_code'        => isset($item->options['bundle_code']) ? $item->options['bundle_code'] : 0,
             ]);
             $orderItem->save();
 
-            static::syncAssignments($orderItem);
+            if ($product?->isBundle()) {
+                // the components at 0, grouped by the bundle line: delivered and licensed one by one
+                foreach ($product->bundleItems as $component) {
+                    $line = new OrderItem([
+                        'order_id'           => $order->id,
+                        'product_variant_id' => $component->product_variant_id,
+                        'deliverable_type'   => $component->product->type,
+                        'prd_code'           => $component->sku(),
+                        'name'               => $component->name(),
+                        'qty'                => $item->qty * $component->qty,
+                        'price'              => 0,
+                        'subtotal'           => 0,
+                        'discountRate'       => 0,
+                        'taxRate'            => $order->tax_rate ?? $item->taxRate,
+                        'shipping'           => 0,
+                        'bundle_code'        => $orderItem->id,
+                    ]);
+                    $line->save();
+                    static::syncAssignments($line);
+                }
+            } else {
+                static::syncAssignments($orderItem);
+            }
         }
 
         if ($recalculate) {

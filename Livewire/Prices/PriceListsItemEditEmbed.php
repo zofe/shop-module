@@ -21,9 +21,16 @@ class PriceListsItemEditEmbed extends Component
     protected $rules = [
         'item.product_id' => 'required',
         'item.price_list_id' => 'required',
-        'item.price_onetime_customer' => 'required',
-        'item.price_monthly_customer' => 'nullable',
-        'item.price_yearly_customer' => 'nullable',
+        'item.product_variant_id'  => 'nullable',
+        'item.has_onetime_payment' => 'boolean',
+        'item.price_onetime'       => 'nullable|numeric|min:0',
+        'item.has_activation_price' => 'boolean',
+        'item.price_activation'    => 'nullable|numeric|min:0',
+        'item.fee_canbe_monthly'   => 'boolean',
+        'item.fee_monthly'         => 'nullable|numeric|min:0',
+        'item.fee_canbe_yearly'    => 'boolean',
+        'item.fee_yearly'          => 'nullable|numeric|min:0',
+        'item.trial_days'          => 'nullable|integer|min:0',
         'metadata'    => 'nullable|array',
         'metadata.*'  => 'nullable|string',
     ];
@@ -89,6 +96,12 @@ class PriceListsItemEditEmbed extends Component
             $this->item->price_list_id = $priceList->id;
             $this->action = 'create';
         }
+    }
+
+    /** The variants of the chosen product, for the variant select. */
+    public function variantsOf($productId): array
+    {
+        return $productId ? \App\Modules\Shop\Models\ProductVariant::where('product_id', $productId)->pluck('name', 'id')->toArray() : [];
     }
 
     public function render()

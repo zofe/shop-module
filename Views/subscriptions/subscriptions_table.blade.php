@@ -13,7 +13,7 @@
                     <th>period</th>
                     <th>status</th>
                     <th>next billing</th>
-                    <th>managed by</th>
+                    <th>collected by</th>
                     <th class="text-end">fee</th>
                 </tr>
                 </thead>
@@ -29,7 +29,7 @@
                         <td>{{ $subscription->period }}</td>
                         <td>{{ $subscription->status }}</td>
                         <td>{{ $subscription->next_billing_at?->format('Y-m-d') ?? '—' }}</td>
-                        <td>{{ $subscription->managed_by }}</td>
+                        <td>{{ $subscription->gateway ?? '—' }}</td>
                         <td class="text-end text-nowrap">{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</td>
                     </tr>
                 @endforeach

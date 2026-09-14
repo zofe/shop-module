@@ -38,14 +38,30 @@ class Shop extends Component
     }
 
 
-    /** $period: onetime | monthly | yearly, one of the periods the item is sold with. */
-    public function addToCart(string $period = 'onetime')
+    /** The one-time purchase goes to the cart. */
+    public function addToCart()
     {
-        if (! $this->price || ! array_key_exists($period, $this->price->periods())) {
+        if (! $this->price || ! $this->price->isPurchasable()) {
             return;
         }
-        Cart::add($this->price, ['period' => $period], 1);
+        Cart::add($this->price, [], 1);
         session()->flash('success', 'Added to the cart');
+    }
+
+    /** A fee: the subscription is created right away (no cart) and the customer lands on its page. */
+    public function subscribe(string $period)
+    {
+        if (! $this->price || ! $this->price->fee($period)) {
+            return;
+        }
+        if (auth()->guest()) {
+            session()->put('url.intended', url()->current());
+            return redirect()->route('login');
+        }
+
+        $subscription = \App\Modules\Shop\Services\SubscriptionService::subscribe(auth()->user(), $this->price, $period);
+
+        return redirect()->route('shop.subscription', $subscription);
     }
 
     public function render()

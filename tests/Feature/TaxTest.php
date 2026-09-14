@@ -106,7 +106,7 @@ class TaxTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1); // 299 €
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1); // 299 €
 
         $order = OrderService::createOrderFromCart(null, $user->id, null, $user->addresses()->first()->id);
 
@@ -126,13 +126,13 @@ class TaxTest extends TestCase
         $bobs = $other->addresses()->create(['address' => 'Elsewhere', 'city' => 'X', 'zipcode' => '1', 'country_code' => 'DE']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
 
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1);
         $order = OrderService::createOrderFromCart(null, $user->id, null, $us->id);
         $this->assertSame(['export', 'US', 'TX'], [$order->tax_reason, $order->shipping_address['country_code'], $order->shipping_address['state_code']]);
         $this->assertEquals(0, $order->tax);
 
         app('cart')->destroy();
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1);
         try {
             OrderService::createOrderFromCart(null, $user->id, null, $bobs->id);
             $this->fail("somebody else's address must not be accepted");
@@ -148,7 +148,7 @@ class TaxTest extends TestCase
         $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
 
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1); // inventory item (physical)
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1); // inventory item (physical)
         try {
             OrderService::createOrderFromCart(null, $user->id);
             $this->fail('no address, no order');
@@ -168,7 +168,7 @@ class TaxTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1);
         $order = OrderService::createOrderFromCart(null, $user->id, null, $fr->id);
         $this->assertSame([20.0, false], [(float) $order->tax_rate, (bool) $order->tax_final], 'estimated 20% FR');
 

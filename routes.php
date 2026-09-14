@@ -47,6 +47,16 @@ Route::get('/shop-orders', \App\Modules\Shop\Livewire\ShopOrders::class)
     ->crumbs(fn ($crumbs) => $crumbs->parent('shop.list')->push('Shop Orders', route_lang('shop.orders')));
 ;
 
+Route::get('/shop-subscriptions', \App\Modules\Shop\Livewire\ShopSubscriptions::class)
+    ->middleware(['web'])
+    ->name('shop.subscriptions')
+    ->crumbs(fn ($crumbs) => $crumbs->parent('shop.list')->push('My subscriptions', route_lang('shop.subscriptions')));
+
+Route::get('/shop-subscription/{subscription}', \App\Modules\Shop\Livewire\ShopSubscription::class)
+    ->middleware(['web'])
+    ->name('shop.subscription')
+    ->crumbs(fn ($crumbs, $subscription) => $crumbs->parent('shop.subscriptions')->push('Subscription ' . $subscription->shortId, route('shop.subscription', $subscription)));
+
 Route::get('/shop-order/{order}', \App\Modules\Shop\Livewire\ShopOrder::class)
     ->middleware(['web'])
     ->name('shop.order')

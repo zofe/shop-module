@@ -55,6 +55,12 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         });
         $this->app->singleton(TaxManager::class);
 
+        $this->app->singleton(\App\Modules\Shop\Payments\Contracts\PaymentRecorder::class, function () {
+            return class_exists(\App\Modules\Payments\Models\Payment::class)
+                ? new \App\Modules\Shop\Payments\Recorders\PaymentsModuleRecorder()
+                : new \App\Modules\Shop\Payments\Recorders\NullRecorder();
+        });
+
         $this->app->singleton(PaymentMethods::class, function () {
             $methods = new PaymentMethods();
             if (class_exists(\App\Modules\Payments\PaymentsManager::class)) {
@@ -79,12 +85,13 @@ class ShopServiceProvider extends RapydModuleServiceProvider
 
         Event::subscribe(OrderWorkflowSubscriber::class);
         Event::subscribe(OrderItemAssignmentWorkflowSubscriber::class);
+        Event::subscribe(\App\Modules\Shop\Listeners\SubscriptionWorkflowSubscriber::class);
         if (class_exists(PaymentConfirmed::class)) {
             Event::listen(PaymentConfirmed::class, PaymentConfirmedListener::class);
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([\App\Modules\Shop\Commands\RenewSubscriptionsCommand::class]);
+            $this->commands([\App\Modules\Shop\Commands\BillSubscriptionsCommand::class]);
         }
 
         if ($this->isEjected()) {

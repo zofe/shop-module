@@ -29,6 +29,27 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function isBundle(): bool
+    {
+        return $this->type === 'bundle';
+    }
+
+    /** The components of a bundle product, sold together at the bundle's own price. */
+    public function bundleItems()
+    {
+        return $this->hasMany(ProductBundleItem::class, 'bundle_product_id');
+    }
+
+    /** The delivery type of a product: its own, or for a bundle the one of its components (physical wins). */
+    public function deliverableType(): string
+    {
+        if (! $this->isBundle()) {
+            return $this->type;
+        }
+
+        return $this->bundleItems->contains(fn ($c) => $c->product->type === 'inventory_item') ? 'inventory_item' : 'service_item';
+    }
+
     public function getFullPathAttribute()
     {
         return $this->category->full_path . '/' . $this->slug;

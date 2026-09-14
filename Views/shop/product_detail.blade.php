@@ -27,27 +27,51 @@
         @endif
 
         <div class="border rounded p-3 mb-3" style="background: var(--bs-tertiary-bg, #f8f9fa);">
-            @php $periods = $price->periods(); $labels = ['onetime' => 'one-time', 'monthly' => 'per month', 'yearly' => 'per year']; @endphp
-            @forelse($periods as $period => $amount)
-                <div class="d-flex align-items-baseline gap-2 {{ $loop->first ? '' : 'mt-1' }}">
-                    <span class="{{ $loop->first ? 'fs-2' : 'fs-5' }} fw-bold">{{ number_format($amount, 2) }} {{ Cart::currency() }}</span>
+            @php $fees = $price->fees(); $labels = ['monthly' => 'per month', 'yearly' => 'per year']; @endphp
+            @if($price->isPurchasable())
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fs-2 fw-bold">{{ number_format($price->price_onetime, 2) }} {{ Cart::currency() }}</span>
+                    <span class="text-muted">one-time</span>
+                </div>
+            @endif
+            @foreach($fees as $period => $fee)
+                <div class="d-flex align-items-baseline gap-2 {{ $loop->first && ! $price->isPurchasable() ? '' : 'mt-1' }}">
+                    <span class="{{ $loop->first && ! $price->isPurchasable() ? 'fs-2' : 'fs-5' }} fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}</span>
                     <span class="text-muted">{{ $labels[$period] }}</span>
                 </div>
-            @empty
+            @endforeach
+            @if($price->activationPrice())
+                <div class="small text-muted mt-1">+ {{ number_format($price->activationPrice(), 2) }} {{ Cart::currency() }} activation, once</div>
+            @endif
+            @if($price->trial_days && $fees)
+                <div class="small text-success mt-1"><i class="fas fa-gift me-1"></i>{{ $price->trial_days }} days free trial</div>
+            @endif
+            @if(! $price->isPurchasable() && ! $fees)
                 <div class="fs-5 text-muted">Contact us for a quote</div>
-            @endforelse
-            <div class="small text-muted mt-1">Taxes estimated in the cart from your billing address.</div>
+            @endif
+            <div class="small text-muted mt-1">Taxes estimated from your billing address.</div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
-                @foreach($periods as $period => $amount)
-                    <x-rpd::button :label="$period === 'onetime' ? 'Add to cart' : 'Subscribe ' . $labels[$period]" icon="cart-plus"
-                                   :color="$loop->first ? 'primary' : 'outline-primary'" click="dispatchSelf('addToCart', { period: '{{ $period }}' })" />
+                @if($price->isPurchasable())
+                    <x-rpd::button label="Add to cart" icon="cart-plus" click="dispatchSelf('addToCart')" />
+                @endif
+                @foreach($fees as $period => $fee)
+                    <x-rpd::button :label="'Subscribe ' . $labels[$period]" icon="sync"
+                                   :color="$loop->first && ! $price->isPurchasable() ? 'primary' : 'outline-primary'" click="subscribe('{{ $period }}')" />
                 @endforeach
                 @if(Cart::count() > 0)
                     <a href="{{ route('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> Go to cart ({{ Cart::count() }})</a>
                 @endif
             </div>
         </div>
+
+        @if($price->product->isBundle())
+            <div class="small text-muted mb-2">Includes:
+                @foreach($price->product->bundleItems as $component)
+                    <span class="badge bg-light text-dark border">{{ $component->qty > 1 ? $component->qty . ' × ' : '' }}{{ $component->name() }}</span>
+                @endforeach
+            </div>
+        @endif
 
         @if($price->product->type === 'inventory_item')
             <div class="small text-muted"><i class="fas fa-truck me-1"></i> Physical item: shipped to the address you choose at checkout.</div>

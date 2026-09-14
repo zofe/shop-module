@@ -32,7 +32,8 @@ class OrdersCheckoutEmbed extends Component
         }
 
         try {
-            $start = $method->start($this->order);
+            $pending = app(\App\Modules\Shop\Payments\Contracts\PaymentRecorder::class)->findPending($this->order);
+            $start = $method->start($this->order, $pending);
         } catch (\RuntimeException $e) {
             session()->flash('checkout_message', $e->getMessage());
             return;

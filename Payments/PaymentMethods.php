@@ -2,7 +2,7 @@
 
 namespace App\Modules\Shop\Payments;
 
-use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Payments\Contracts\Payable;
 use App\Modules\Shop\Payments\Contracts\PaymentMethod;
 use Illuminate\Support\Collection;
 
@@ -40,10 +40,10 @@ class PaymentMethods
         return collect($this->methods);
     }
 
-    /** @return Collection<string, PaymentMethod> the ones to offer for this order */
-    public function for(Order $order): Collection
+    /** @return Collection<string, PaymentMethod> the ones to offer for this payable (an order, a subscription period) */
+    public function for(Payable $payable): Collection
     {
-        return $this->all()->filter(fn (PaymentMethod $m) => $m->available($order));
+        return $this->all()->filter(fn (PaymentMethod $m) => $m->available($payable));
     }
 
     public function find(string $key): ?PaymentMethod

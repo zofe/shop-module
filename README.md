@@ -16,41 +16,54 @@ php artisan db:seed --class="App\Modules\Shop\Database\Seeders\ShopSeeder"   # t
 
 The seeder attaches the demo orders to the first user of the application.
 
-## Checkout
+## Price lists
 
-A customer adds products to the cart, saves a shipping address (the Addresses module of rapyd-admin) and makes the
-order. With `SHOP_CHECKOUT_MODE=immediate` (default) the order goes straight to `pending_payment`; with
-`after_assignment` payment waits until an operator has assigned every delivery item.
+A price list row says how a product (or one of its variants) is sold:
 
-## Payment methods
+| Flag | Price | Meaning |
+|---|---|---|
+| `has_onetime_payment` | `price_onetime` | bought once, through the cart → an **order** |
+| `fee_canbe_monthly` / `fee_canbe_yearly` | `fee_monthly` / `fee_yearly` | a recurring fee → a **subscription** |
+| `has_activation_price` | `price_activation` | charged once with the first fee |
+| | `trial_days` | the subscription starts free, the first fee is due at the end of the trial |
 
-The checkout page offers the methods of `config('shop.payment_methods')`, classes implementing
-`App\Modules\Shop\Payments\Contracts\PaymentMethod` (`label()`, `available($order)`, `start($order)` returning a
-redirect URL or a message). The shop ships **ManualPayment**: the order moves to *payment verification*, the customer
-reads the instructions of `config('shop.manual_payment')` (bank transfer, a PayPal link you send by hand…) and an
-operator confirms with the *payment done* transition on the order page. No gateway, no subscription.
+A product may carry both (a device bought once, a service on a fee). **Variants** (`product_variants`: a size, a plan
+tier, a licence size) have their own SKU and stock and their own price list rows. A **bundle** (`products.type =
+bundle`, `product_bundle_items`) is sold at its own price and unfolds into its components at 0, grouped by
+`bundle_code`, so delivery and licences stay per component. Price lists per role (`price_lists.role`) fall back to the
+default list; a company can have a list of its own (`companies.pricelist_id`).
 
-`zofe/payments-module` (Stripe, GoCardless, Paddle) adds its gateways automatically when installed, with the labels
-of `config('shop.gateway_methods')`; the order is confirmed by its `PaymentConfirmed` event. Your own gateway: one
-class, its name in `payment_methods`.
+## Orders (the cart)
+
+One-time purchases: the customer adds products to the cart, picks a shipping address (physical goods) and makes the
+order. `pay_order` opens a local **payment record** (pending) when `zofe/payments-module` is installed; the customer
+pays it with one of the payment methods, the gateway's webhook or an operator confirms it, the order reaches
+`payment_done` and delivery / licence generation follow in the order workflow. With `SHOP_CHECKOUT_MODE=after_assignment`
+payment waits until an operator has assigned every delivery item.
 
 ## Subscriptions
 
-A price list item can be sold one-time, monthly or yearly (its three prices); the product page offers one button per
-period and the cart line remembers it. When an order with recurring lines is paid (a gateway's `PaymentConfirmed`, or an
-operator's *payment done*), a **Subscription** with its **SubscriptionItems** is created: period, start date, next
-billing date, the customer, the totals. The payment that created it is linked with `subscription_id`.
+A separate flow, no cart: "Subscribe monthly / yearly" on a product sold as a fee creates the **Subscription** with its
+**SubscriptionItems** (the fees; a bundle unfolds its components) and the **first pending payment** (fee plus
+activation), or a trial that is billed at its end. The customer's page (`/shop-subscription/{id}`) shows items, billing
+address, the payment due with the payment methods, and lets them add or remove fees; the admin page adds "mark paid",
+"failed", "bill now" and the workflow transitions (`activate`, `past_due`, `cancel`).
 
-Renewals mirror the order flow: `php artisan shop:renew-subscriptions` (schedule it daily) creates a **renewal order**
-(`orders.kind = renewal`, `subscription_id`) for every subscription whose billing date has come; it is paid like any
-order (manual, Stripe…) and its payment extends the subscription and is linked with `ref_subscription_id`. Invoices
-belong to an invoice module through `invoice_id` on the payment. Status is a workflow (`active`, `past_due`,
-`cancelled`) with transitions and history on the subscription page.
+Every period `php artisan shop:bill-subscriptions` (schedule it daily) creates the next pending payment; a confirmed
+payment extends `next_billing_at`, a pending one older than `SHOP_SUBSCRIPTION_GRACE_DAYS` (7) marks the subscription
+past due. Payment records (`zofe/payments-module`) carry `subscription_id` for the first period and
+`ref_subscription_id` for the following ones; invoices belong to an invoice module through `invoice_id`. Without a
+payments module the operator drives the state machine by hand.
 
-```dotenv
-SHOP_SUBSCRIPTIONS_MANAGED_BY=shop     # shop: the shop bills renewals | stripe, paddle…: the gateway charges,
-                                       # the shop mirrors the subscription and records the payments it reports
-```
+## Payment methods
+
+The checkout offers the methods of `config('shop.payment_methods')`, classes implementing
+`App\Modules\Shop\Payments\Contracts\PaymentMethod` on a `Payable` (an order or a subscription period): `label()`,
+`available($payable)`, `start($payable, $pendingPayment)` returning a redirect URL or a message. The shop ships
+**ManualPayment** (bank transfer, a link sent by hand…: the record stays pending until an operator confirms it).
+`zofe/payments-module` adds its gateways when installed (labels in `config('shop.gateway_methods')`; Paddle is offered
+for digital goods only); its `PaymentConfirmed` event confirms orders and subscriptions. Your own gateway: one class,
+its name in `payment_methods`.
 
 ## Taxes
 

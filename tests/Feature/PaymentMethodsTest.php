@@ -24,7 +24,7 @@ class PaymentMethodsTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $address = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->actingAs($user);
-        app('cart')->add(PriceListItem::find(1), 1); // the licence, 299 € + 20% FR VAT
+        app('cart')->add(PriceListItem::find(1), [], 1); // the licence, 299 € + 20% FR VAT
         $order = OrderService::createOrderFromCart(null, $user->id, null, $address->id);
         \Workflow::get($order, 'order')->apply($order, 'pay_order');
         $order->save();
@@ -41,7 +41,7 @@ class PaymentMethodsTest extends TestCase
 
     public function test_the_customer_pays_by_bank_transfer()
     {
-        config(['shop.manual_payment.instructions' => 'Order {order}: transfer {total} to IBAN IT00, we confirm at {email}.']);
+        config(['shop.manual_payment.instructions' => '{description}: transfer {total} to IBAN IT00, we confirm at {email}.']);
         $order = $this->pendingOrder();
 
         Livewire::test('shop::orders.orders-checkout-embed', ['order' => $order])
@@ -70,8 +70,8 @@ class PaymentMethodsTest extends TestCase
             public function label(): string { return 'Acme Pay'; }
             public function description(): string { return 'test'; }
             public function icon(): string { return 'fa-bolt'; }
-            public function available(Order $order): bool { return $order->total > 100; }
-            public function start(Order $order): PaymentStart { return PaymentStart::redirect('https://pay.acme.test/' . $order->id); }
+            public function available(\App\Modules\Shop\Payments\Contracts\Payable $p): bool { return $p->payableAmounts()['total'] > 100; }
+            public function start(\App\Modules\Shop\Payments\Contracts\Payable $p, ?object $payment = null): PaymentStart { return PaymentStart::redirect('https://pay.acme.test/' . $p->payableId()); }
         });
         $order = $this->pendingOrder();
 

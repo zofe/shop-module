@@ -45,7 +45,9 @@ class SubscriptionItem extends Model implements BuyableItem
 
         static::creating(function ($item){
             $item->subtotal = $item->price * $item->qty;
-            $item->taxRate = \App\Modules\Shop\Tax\Tax::forCompany($item->subscription->company)->rate;
+            if ($item->taxRate === null) {
+                $item->taxRate = \App\Modules\Shop\Tax\Tax::forCompany($item->subscription->company)->rate;
+            }
             $item->total = $item->getCalculated('total');
         });
 
@@ -75,6 +77,17 @@ class SubscriptionItem extends Model implements BuyableItem
     public function priceListItem()
     {
         return $this->belongsTo(PriceListItem::class, 'price_list_item_id', 'id');
+    }
+
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /** The one-time activation of this line, from its price list row. */
+    public function activationPrice(): float
+    {
+        return $this->priceListItem?->activationPrice() ?? 0.0;
     }
 
     public function deliverable()

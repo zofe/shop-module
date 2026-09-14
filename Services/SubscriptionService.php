@@ -2,157 +2,177 @@
 
 namespace App\Modules\Shop\Services;
 
-use App\Modules\Shop\Models\Order;
-use App\Modules\Shop\Models\OrderItem;
+use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Models\SubscriptionItem;
+use App\Modules\Shop\Payments\Contracts\PaymentRecorder;
 use App\Modules\Shop\Tax\Tax;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Subscriptions and their renewals, mirroring the order flow: an order sells the
- * recurring lines, its payment creates the subscription; a renewal order is
- * generated when the next billing date comes, and its payment extends it.
+ * The subscription flow, separate from the cart: "Subscribe" creates the
+ * subscription with its items and the first pending payment; every period the
+ * billing command creates the next pending payment; a confirmed payment
+ * activates / extends the subscription, a failed one marks it past due.
  */
 class SubscriptionService
 {
-    /** Called when an order is paid: creates the subscription (first order) or extends it (renewal). */
-    public static function onOrderPaid(Order $order): ?Subscription
+    /** "Subscribe": a new subscription for a fee of the price list, first period pending (or a trial). */
+    public static function subscribe(Model $user, PriceListItem $item, string $period, int $qty = 1, ?Model $address = null): Subscription
     {
-        if ($order->isRenewal()) {
-            return $order->subscription ? self::renewed($order->subscription, $order) : null;
+        if (! $item->fee($period)) {
+            throw new \InvalidArgumentException("createSubscription: {$item->name} is not sold {$period}");
         }
+        $company = method_exists($user, 'company') ? $user->company : null;
+        $estimate = $company ? Tax::forCompany($company, address: $address) : Tax::forUser($user, address: $address);
+        $today = now();
 
-        if ($order->subscription_id) {
-            return $order->subscription; // already created
-        }
+        return DB::transaction(function () use ($user, $company, $item, $period, $qty, $estimate, $today) {
+            $subscription = new Subscription([
+                'price_list_id' => $item->price_list_id,
+                'description'   => $item->name,
+                'period'        => $period,
+                'company_id'    => $company?->id,
+                'user_id'       => $user->id,
+                'discount'      => 0, 'subtotal' => 0, 'shipping' => 0, 'tax' => 0, 'total' => 0,
+                'start_date'    => $today->toDateString(),
+                'status'        => $item->trial_days > 0 ? 'trialing' : 'pending',
+            ]);
+            if ($item->trial_days > 0) {
+                $subscription->trial_ends_at = $today->copy()->addDays($item->trial_days)->toDateString();
+                $subscription->next_billing_at = $subscription->trial_ends_at;
+            } else {
+                $subscription->next_billing_at = $today->toDateString();   // the first period is due now
+            }
+            $subscription->save();
 
-        return self::createFromOrder($order);
+            self::addItem($subscription, $item, $qty, $estimate->rate);
+
+            if (! $subscription->onTrial()) {
+                self::billPeriod($subscription->fresh(), true);
+            }
+
+            return $subscription->fresh();
+        });
     }
 
-    /** One subscription for the recurring lines of the order (monthly and yearly lines become separate subscriptions). */
-    public static function createFromOrder(Order $order, ?Carbon $start = null): ?Subscription
+    /** A recurring line (a fee of the price list, same period as the subscription); components of a bundle at 0. */
+    public static function addItem(Subscription $subscription, PriceListItem $item, int $qty = 1, ?float $taxRate = null): SubscriptionItem
     {
-        $recurring = $order->items->filter(fn (OrderItem $item) => $item->isRecurring());
-        if ($recurring->isEmpty()) {
-            return null;
+        $fee = $item->fee($subscription->period);
+        if ($fee === null) {
+            throw new \InvalidArgumentException("addItem: {$item->name} is not sold {$subscription->period}");
         }
-        $start ??= now();
-        $first = null;
+        $taxRate ??= $subscription->items->first()?->taxRate ?? ($subscription->company ? Tax::forCompany($subscription->company) : Tax::forUser($subscription->user))->rate;
 
-        DB::transaction(function () use ($order, $recurring, $start, &$first) {
-            foreach ($recurring->groupBy('period') as $period => $items) {
-                $subscription = new Subscription([
-                    'price_list_id'   => $order->price_list_id,
-                    'order_id'        => $order->id,
-                    'description'     => $items->pluck('name')->join(', '),
-                    'period'          => $period,
-                    'company_id'      => $order->company_id,
-                    'user_id'         => $order->user_id,
-                    'discount'        => 0, 'subtotal' => 0, 'tax' => 0, 'total' => 0,
-                    'start_date'      => $start->toDateString(),
-                    'status'          => 'active',
-                    'managed_by'      => config('shop.subscriptions.managed_by', 'shop'),
+        $line = SubscriptionItem::create([
+            'subscription_id'    => $subscription->id,
+            'price_list_item_id' => $item->id,
+            'product_variant_id' => $item->product_variant_id,
+            'deliverable_type'   => $item->product->deliverableType(),
+            'name'               => $item->name,
+            'prd_code'           => $item->sku,
+            'period'             => $subscription->period,
+            'price'              => $fee,
+            'qty'                => $qty,
+            'subtotal'           => round($fee * $qty, 2),
+            'taxRate'            => $taxRate,
+            'total'              => round($fee * $qty * (1 + $taxRate / 100), 2),
+        ]);
+
+        if ($item->product->isBundle()) {
+            foreach ($item->product->bundleItems as $component) {
+                SubscriptionItem::create([
+                    'subscription_id'    => $subscription->id,
+                    'product_variant_id' => $component->product_variant_id,
+                    'deliverable_type'   => $component->product->type,
+                    'name'               => $component->name(),
+                    'prd_code'           => $component->sku(),
+                    'period'             => $subscription->period,
+                    'price'              => 0, 'qty' => $qty * $component->qty, 'subtotal' => 0,
+                    'taxRate'            => $taxRate, 'total' => 0,
+                    'bundle_code'        => $line->id,
                 ]);
-                $subscription->next_billing_at = $subscription->nextBillingAfter($start)->toDateString();
+            }
+        }
+        $subscription->recalculate();
+
+        return $line;
+    }
+
+    public static function removeItem(SubscriptionItem $item): void
+    {
+        $subscription = $item->subscription;
+        SubscriptionItem::where('bundle_code', $item->id)->delete();
+        $item->delete();
+        $subscription->recalculate();
+    }
+
+    /** The pending payment of the period starting at next_billing_at (activation included on the first one). */
+    public static function billPeriod(Subscription $subscription, bool $first = false): ?object
+    {
+        $subscription->firstPeriod = $first;
+
+        return app(PaymentRecorder::class)->pending($subscription);
+    }
+
+    /** Every subscription whose billing date has come: a pending payment for the next period. */
+    public static function billDue(?Carbon $on = null): array
+    {
+        $billed = [];
+        foreach (Subscription::dueForBilling($on)->get() as $subscription) {
+            $first = $subscription->status === 'trialing' || $subscription->status === 'pending';
+            if ($payment = self::billPeriod($subscription, $first)) {
+                $billed[] = [$subscription, $payment];
+            }
+            if ($subscription->status === 'trialing') {
+                $subscription->status = 'pending'; // the trial is over: waiting for the first payment
                 $subscription->save();
-
-                foreach ($items as $item) {
-                    SubscriptionItem::create([
-                        'subscription_id'    => $subscription->id,
-                        'price_list_item_id' => $item->price_list_item_id,
-                        'order_item_id'      => $item->id,
-                        'name'               => $item->name,
-                        'prd_code'           => $item->prd_code,
-                        'bundle_code'        => $item->bundle_code,
-                        'period'             => $period,
-                        'price'              => $item->price,
-                        'qty'                => $item->qty,
-                        'subtotal'           => $item->subtotal,
-                        'taxRate'            => $item->taxRate,
-                        'total'              => round($item->subtotal * (1 + $item->taxRate / 100), 2),
-                    ]);
-                }
-                $subscription->recalculate();
-
-                $first ??= $subscription;
-                if (! $order->subscription_id) {
-                    $order->subscription_id = $subscription->id;
-                    $order->save();
-                }
             }
-        });
+        }
 
-        return $first?->fresh();
+        return $billed;
     }
 
-    /** A renewal order for the next period, to be paid like any order. */
-    public static function renew(Subscription $subscription): Order
-    {
-        $estimate = $subscription->company ? Tax::forCompany($subscription->company) : Tax::forUser($subscription->user);
-
-        return DB::transaction(function () use ($subscription, $estimate) {
-            $order = new Order();
-            $order->id = (string) \Illuminate\Support\Str::uuid();
-            $order->kind = 'renewal';
-            $order->subscription_id = $subscription->id;
-            $order->user_id = $subscription->user_id;
-            $order->company_id = $subscription->company_id;
-            $order->price_list_id = $subscription->price_list_id;
-            $order->discount = 0;
-            $order->shipping = 0;
-            $order->subtotal = round((float) $subscription->items->sum('subtotal'), 2);
-            $order->tax_rate = $estimate->rate;
-            $order->tax_reason = $estimate->reason;
-            $order->tax_source = $estimate->source;
-            $order->tax_final = false;
-            $order->tax = round($order->subtotal * $estimate->rate / 100, 2);
-            $order->total = round($order->subtotal + $order->tax, 2);
-            $order->note = 'Renewal of subscription ' . $subscription->shortId . ' (' . $subscription->period . ') from ' . $subscription->next_billing_at?->format('Y-m-d');
-            $order->status = 'pending_payment';
-            $order->save();
-
-            foreach ($subscription->items as $item) {
-                OrderItem::create([
-                    'order_id'           => $order->id,
-                    'price_list_item_id' => $item->price_list_item_id,
-                    'deliverable_type'   => $item->deliverable_type,
-                    'prd_code'           => $item->prd_code,
-                    'name'               => $item->name,
-                    'qty'                => $item->qty,
-                    'price'              => $item->price,
-                    'subtotal'           => $item->subtotal,
-                    'taxRate'            => $estimate->rate,
-                    'period'             => $item->period,
-                    'bundle_code'        => $item->bundle_code ?? 0,
-                ]);
-            }
-
-            return $order->fresh();
-        });
-    }
-
-    /** The renewal is paid: the subscription runs for one more period. */
-    public static function renewed(Subscription $subscription, Order $order): Subscription
+    /** A payment of this subscription was confirmed: (re)activate it and move the billing date one period on. */
+    public static function paymentConfirmed(Subscription $subscription, ?object $payment = null): Subscription
     {
         $from = $subscription->next_billing_at ?? now();
         $subscription->next_billing_at = $subscription->nextBillingAfter($from)->toDateString();
         $subscription->status = 'active';
+        if ($payment && ! $subscription->gateway && ($payment->gateway ?? null)) {
+            $subscription->gateway = $payment->gateway;
+        }
         $subscription->save();
 
         return $subscription;
     }
 
-    /** Renewal orders for every subscription due today: run daily (shop:renew-subscriptions). */
-    public static function renewDue(?Carbon $on = null): array
+    /** A payment failed, or a pending one is older than the grace period. */
+    public static function paymentFailed(Subscription $subscription): Subscription
     {
-        $orders = [];
-        foreach (Subscription::dueForRenewal($on)->get() as $subscription) {
-            $orders[] = self::renew($subscription);
+        if ($subscription->status === 'active') {
+            $subscription->status = 'past_due';
+            $subscription->save();
         }
 
-        return $orders;
+        return $subscription;
+    }
+
+    /** Pending payments older than config('shop.subscriptions.grace_days') mark their subscription past due. */
+    public static function markPastDue(?Carbon $on = null): int
+    {
+        $on ??= now();
+        $grace = (int) config('shop.subscriptions.grace_days', 7);
+        $count = 0;
+        foreach (Subscription::where('status', 'active')->whereDate('next_billing_at', '<=', $on->copy()->subDays($grace)->toDateString())->get() as $subscription) {
+            self::paymentFailed($subscription);
+            $count++;
+        }
+
+        return $count;
     }
 
     public static function cancel(Subscription $subscription, ?Carbon $endsAt = null): Subscription
