@@ -27,6 +27,14 @@ class OrderWorkflowSubscriber
     }
 
 
+    /** payment_done reached (a gateway or an operator): recurring lines become / extend a subscription. */
+    public function onPaymentDone($event)
+    {
+        /** @var Order $order */
+        $order = $event->getSubject();
+        \App\Modules\Shop\Services\SubscriptionService::onOrderPaid($order->fresh());
+    }
+
     public function onGuardCompleteOrder($event)
     {
         /** @var Order $order */
@@ -52,6 +60,10 @@ class OrderWorkflowSubscriber
         // workflow.[workflow name].enter.[place name]
         // workflow.[workflow name].completed.[transition name]
 
+        $events->listen(
+            'workflow.order.completed.payment_done',
+            'App\Modules\Shop\Listeners\OrderWorkflowSubscriber@onPaymentDone'
+        );
         $events->listen(
             'workflow.order.guard.complete_order',
             'App\Modules\Shop\Listeners\OrderWorkflowSubscriber@onGuardCompleteOrder'

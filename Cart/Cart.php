@@ -868,6 +868,11 @@ class Cart
     private function createCartItem($id, $sku, $name, $qty, $price, $priceActivation, $weight, $shipping, array $options)
     {
         if ($id instanceof Buyable) {
+            // add($buyable, ['period' => …], $qty): options and quantity may come in any of the next slots
+            $given = array_values(array_filter([$sku, $name, $qty, $options], 'is_array'));
+            $numbers = array_values(array_filter([$sku, $name, $qty], fn ($v) => is_numeric($v)));
+            $qty = $given[0] ?? [];
+            $name = $numbers[0] ?? 1;
 
             $cartItem = CartItem::fromBuyable($id, $qty ?: []);
             $cartItem->setQuantity($name ?: 1);

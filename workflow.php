@@ -176,4 +176,21 @@ return [
             ],
         ]
     ],
+    'subscription' => [
+        'type'          => 'state_machine',
+        'marking_store' => ['type' => 'single_state', 'property' => 'status'],
+        'initial_marking' => 'active',
+        'supports'      => [\App\Modules\Shop\Models\Subscription::class],
+        'places' => [
+            'pending'   => ['metadata' => ['label' => 'pending']],
+            'active'    => ['metadata' => ['label' => 'active']],
+            'past_due'  => ['metadata' => ['label' => 'past due']],
+            'cancelled' => ['metadata' => ['label' => 'cancelled', 'final' => true]],
+        ],
+        'transitions' => [
+            'activate'   => ['from' => ['pending', 'past_due'], 'to' => 'active',    'metadata' => ['label' => 'activate']],
+            'past_due'   => ['from' => ['active'],              'to' => 'past_due',  'metadata' => ['label' => 'mark past due']],
+            'cancel'     => ['from' => ['pending', 'active', 'past_due'], 'to' => 'cancelled', 'metadata' => ['label' => 'cancel']],
+        ],
+    ],
 ];

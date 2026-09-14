@@ -38,9 +38,14 @@ class Shop extends Component
     }
 
 
-    public function addToCart()
+    /** $period: onetime | monthly | yearly, one of the periods the item is sold with. */
+    public function addToCart(string $period = 'onetime')
     {
-        Cart::add($this->price, 1);
+        if (! $this->price || ! array_key_exists($period, $this->price->periods())) {
+            return;
+        }
+        Cart::add($this->price, ['period' => $period], 1);
+        session()->flash('success', 'Added to the cart');
     }
 
     public function render()

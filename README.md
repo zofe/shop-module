@@ -34,6 +34,24 @@ operator confirms with the *payment done* transition on the order page. No gatew
 of `config('shop.gateway_methods')`; the order is confirmed by its `PaymentConfirmed` event. Your own gateway: one
 class, its name in `payment_methods`.
 
+## Subscriptions
+
+A price list item can be sold one-time, monthly or yearly (its three prices); the product page offers one button per
+period and the cart line remembers it. When an order with recurring lines is paid (a gateway's `PaymentConfirmed`, or an
+operator's *payment done*), a **Subscription** with its **SubscriptionItems** is created: period, start date, next
+billing date, the customer, the totals. The payment that created it is linked with `subscription_id`.
+
+Renewals mirror the order flow: `php artisan shop:renew-subscriptions` (schedule it daily) creates a **renewal order**
+(`orders.kind = renewal`, `subscription_id`) for every subscription whose billing date has come; it is paid like any
+order (manual, Stripe…) and its payment extends the subscription and is linked with `ref_subscription_id`. Invoices
+belong to an invoice module through `invoice_id` on the payment. Status is a workflow (`active`, `past_due`,
+`cancelled`) with transitions and history on the subscription page.
+
+```dotenv
+SHOP_SUBSCRIPTIONS_MANAGED_BY=shop     # shop: the shop bills renewals | stripe, paddle…: the gateway charges,
+                                       # the shop mirrors the subscription and records the payments it reports
+```
+
 ## Taxes
 
 The cart and the order show a **tax estimate** computed from the customer's billing data: the VAT number of their

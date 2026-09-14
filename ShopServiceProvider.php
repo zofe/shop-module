@@ -69,6 +69,7 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         Relation::morphMap([
             'order'                 => Order::class,
             'order_item_assignment' => OrderItemAssignment::class,
+            'subscription'          => \App\Modules\Shop\Models\Subscription::class,
         ], true);
     }
 
@@ -80,6 +81,10 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         Event::subscribe(OrderItemAssignmentWorkflowSubscriber::class);
         if (class_exists(PaymentConfirmed::class)) {
             Event::listen(PaymentConfirmed::class, PaymentConfirmedListener::class);
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([\App\Modules\Shop\Commands\RenewSubscriptionsCommand::class]);
         }
 
         if ($this->isEjected()) {

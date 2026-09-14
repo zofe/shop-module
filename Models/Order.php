@@ -53,4 +53,20 @@ class Order extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    /** The subscription this order created (kind order) or renews (kind renewal). */
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class);
+    }
+
+    public function isRenewal(): bool
+    {
+        return $this->kind === 'renewal';
+    }
+
+    public function hasRecurringItems(): bool
+    {
+        return $this->items->contains(fn ($item) => $item->isRecurring());
+    }
 }

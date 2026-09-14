@@ -15,7 +15,7 @@ class OrderItem extends Model implements BuyableItem
 
     protected $fillable = [
         'order_id', 'price_list_item_id', 'name', 'qty', 'price', 'subtotal', 'discountRate', 'taxRate', 'shipping',
-        'bundle_code', 'prd_code', 'deliverable_type'
+        'bundle_code', 'prd_code', 'deliverable_type', 'period'
     ];
 
     public function order(): BelongsTo
@@ -26,6 +26,11 @@ class OrderItem extends Model implements BuyableItem
     public function assignments(): HasMany
     {
         return $this->hasMany(OrderItemAssignment::class);
+    }
+
+    public function isRecurring(): bool
+    {
+        return in_array($this->period, ['monthly', 'yearly']);
     }
 
     public function priceListItem(): BelongsTo

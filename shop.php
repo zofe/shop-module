@@ -137,6 +137,21 @@ return [
         'instructions' => 'Thank you. Your order {order} of {total} is registered: we will contact you at {email} with the payment details.',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Subscriptions
+    |--------------------------------------------------------------------------
+    | Recurring lines (monthly / yearly prices) of a paid order become a
+    | Subscription with its items. managed_by:
+    |   shop    : the shop bills the renewals (a renewal order per period,
+    |             `php artisan shop:renew-subscriptions` daily) and you invoice
+    |   stripe… : a gateway charges the customer; the shop only mirrors the
+    |             subscription and records the payments its webhooks report
+    */
+    'subscriptions' => [
+        'managed_by' => env('SHOP_SUBSCRIPTIONS_MANAGED_BY', 'shop'),
+    ],
+
     // Labels of the zofe/payments-module gateways on the checkout page
     'gateway_methods' => [
         'stripe' => [

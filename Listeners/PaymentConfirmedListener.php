@@ -43,6 +43,14 @@ class PaymentConfirmedListener
 
             $order->save();
 
+            // The workflow hook created / extended the subscription: link the payment like uania does
+            $order->refresh();
+            if ($order->subscription_id) {
+                $payment->forceFill($order->isRenewal()
+                    ? ['ref_subscription_id' => $order->subscription_id]
+                    : ['subscription_id' => $order->subscription_id])->save();
+            }
+
             Log::info('Order advanced after payment confirmed', [
                 'order_id'   => $order->id,
                 'status'     => $order->status,

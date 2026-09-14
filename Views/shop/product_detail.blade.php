@@ -27,31 +27,22 @@
         @endif
 
         <div class="border rounded p-3 mb-3" style="background: var(--bs-tertiary-bg, #f8f9fa);">
-            @if($price->price_onetime_customer > 0)
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-2 fw-bold">{{ number_format($price->price_onetime_customer, 2) }} {{ Cart::currency() }}</span>
-                    <span class="text-muted">one-time</span>
+            @php $periods = $price->periods(); $labels = ['onetime' => 'one-time', 'monthly' => 'per month', 'yearly' => 'per year']; @endphp
+            @forelse($periods as $period => $amount)
+                <div class="d-flex align-items-baseline gap-2 {{ $loop->first ? '' : 'mt-1' }}">
+                    <span class="{{ $loop->first ? 'fs-2' : 'fs-5' }} fw-bold">{{ number_format($amount, 2) }} {{ Cart::currency() }}</span>
+                    <span class="text-muted">{{ $labels[$period] }}</span>
                 </div>
-            @endif
-            @if($price->price_yearly_customer > 0)
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="{{ $price->price_onetime_customer > 0 ? 'fs-5' : 'fs-2' }} fw-bold">{{ number_format($price->price_yearly_customer, 2) }} {{ Cart::currency() }}</span>
-                    <span class="text-muted">per year</span>
-                </div>
-            @endif
-            @if($price->price_monthly_customer > 0)
-                <div class="d-flex align-items-baseline gap-2">
-                    <span class="fs-5">{{ number_format($price->price_monthly_customer, 2) }} {{ Cart::currency() }}</span>
-                    <span class="text-muted">per month</span>
-                </div>
-            @endif
-            @if($price->price_onetime_customer <= 0 && $price->price_yearly_customer <= 0 && $price->price_monthly_customer <= 0)
+            @empty
                 <div class="fs-5 text-muted">Contact us for a quote</div>
-            @endif
+            @endforelse
             <div class="small text-muted mt-1">Taxes estimated in the cart from your billing address.</div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
-                <x-rpd::button label="Add to cart" icon="cart-plus" click="dispatchSelf('addToCart')" />
+                @foreach($periods as $period => $amount)
+                    <x-rpd::button :label="$period === 'onetime' ? 'Add to cart' : 'Subscribe ' . $labels[$period]" icon="cart-plus"
+                                   :color="$loop->first ? 'primary' : 'outline-primary'" click="dispatchSelf('addToCart', { period: '{{ $period }}' })" />
+                @endforeach
                 @if(Cart::count() > 0)
                     <a href="{{ route('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> Go to cart ({{ Cart::count() }})</a>
                 @endif

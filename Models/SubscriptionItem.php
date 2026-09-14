@@ -3,6 +3,7 @@
 namespace App\Modules\Shop\Models;
 
 
+use App\Modules\Shop\Cart\Contracts\BuyableItem;
 use App\Modules\Shop\Cart\DefaultCalculator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 
-class SubscriptionItem extends Model
+class SubscriptionItem extends Model implements BuyableItem
 {
     use HasFactory;
     use SoftDeletes;
@@ -61,9 +62,24 @@ class SubscriptionItem extends Model
         });
     }
 
+    public function getDiscountRate(): float
+    {
+        return (float) ($this->discountRate ?? 0);
+    }
+
     public function subscription()
     {
         return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
+    }
+
+    public function priceListItem()
+    {
+        return $this->belongsTo(PriceListItem::class, 'price_list_item_id', 'id');
+    }
+
+    public function deliverable()
+    {
+        return $this->morphTo();
     }
 
     public function updatePriceQty($newPrice, $qty, $shipping = null)

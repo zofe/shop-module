@@ -127,6 +127,11 @@ Route::get('/orders/pay/{order}', \App\Modules\Shop\Livewire\Orders\OrdersChecko
     ->name('orders.pay')
     ->crumbs(fn ($crumbs, $order) => $crumbs->parent('orders.view', $order)->push('Checkout', route('orders.pay', $order)));
 
+Route::get('/subscriptions/view/{subscription}', \App\Modules\Shop\Livewire\Subscriptions\SubscriptionsView::class)
+    ->middleware(['web'])
+    ->name('subscriptions.view')
+    ->crumbs(fn ($crumbs, $subscription) => $crumbs->parent('subscriptions.table')->push('Subscription ' . $subscription->shortId, route('subscriptions.view', $subscription)));
+
 Route::get('/subscriptions/table', \App\Modules\Shop\Livewire\Subscriptions\SubscriptionsTable::class)
     ->middleware(['web'])
     ->name('subscriptions.table')

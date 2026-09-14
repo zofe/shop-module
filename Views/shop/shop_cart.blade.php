@@ -75,7 +75,7 @@
                                     @endif
                                 </td>
                                 <td>{{ $item->sku }} </td>
-                                <td>{{ $item->name }} <span class="small">{{ $item->description }}</span></td>
+                                <td>{{ $item->name }}@if(($item->options->period ?? 'onetime') !== 'onetime') <span class="badge bg-secondary">{{ $item->options->period }}</span>@endif <span class="small">{{ $item->description }}</span></td>
                                 <td class="text-end">{{ $item->price() }} {{ Cart::currency() }}</td>
                                 <td class="text-end">{{ $item->qty }}</td>
                                 <td class="text-center">

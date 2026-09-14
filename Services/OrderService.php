@@ -130,6 +130,7 @@ class OrderService
                 'subtotal' => $item->subtotal,
                 'discountRate' => $item->discountRate,
                 'taxRate' => $order->tax_rate ?? $item->taxRate,
+                'period' => $item->options['period'] ?? 'onetime',
                 'shipping' => $item->shipping,
                 'bundle_code' => isset($item->options['bundle_code']) ? $item->options['bundle_code'] : 0,
             ]);
