@@ -162,6 +162,23 @@ class TaxTest extends TestCase
         $this->assertNotNull(OrderService::createOrderFromCart(null, $user->id));
     }
 
+    public function test_the_gateway_amounts_make_the_tax_final()
+    {
+        $this->fakeVies();
+        $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
+        $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
+        $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), 1);
+        $order = OrderService::createOrderFromCart(null, $user->id, null, $fr->id);
+        $this->assertSame([20.0, false], [(float) $order->tax_rate, (bool) $order->tax_final], 'estimated 20% FR');
+
+        // Stripe Tax found a 21% customer and charged 361.79
+        OrderService::applyPayment($order, ['tax' => 62.79, 'total' => 361.79, 'subtotal' => 299, 'shipping' => 0], 'stripe_tax');
+
+        $order->refresh();
+        $this->assertSame([62.79, 361.79, 21.0, 'stripe_tax', true], [(float) $order->tax, (float) $order->total, (float) $order->tax_rate, $order->tax_source, (bool) $order->tax_final]);
+    }
+
     public function test_the_cart_shows_the_estimate_of_the_customer()
     {
         $this->fakeVies();

@@ -76,6 +76,31 @@ class OrderService
     }
 
 
+    /**
+     * The amounts a gateway actually charged replace the estimate: tax, total and the
+     * derived rate become final. $amounts: ['tax' => , 'total' => , 'subtotal' => ?, 'shipping' => ?].
+     * $source: what computed the tax (stripe_tax, paddle…) or 'gateway:<name>' when the
+     * gateway charged the shop's estimate as it was.
+     */
+    public static function applyPayment(Order $order, array $amounts, string $source): Order
+    {
+        if (isset($amounts['tax'])) {
+            $order->tax = round((float) $amounts['tax'], 2);
+        }
+        if (isset($amounts['total'])) {
+            $order->total = round((float) $amounts['total'], 2);
+        }
+        $base = (float) ($amounts['subtotal'] ?? $order->subtotal) + (float) ($amounts['shipping'] ?? $order->shipping);
+        if ($base > 0) {
+            $order->tax_rate = round((float) $order->tax / $base * 100, 2);
+        }
+        $order->tax_source = $source;
+        $order->tax_final = true;
+        $order->save();
+
+        return $order;
+    }
+
     /** The address only if it belongs to the customer (or their company): never trust an id from the browser. */
     protected static function addressOf($owner, $address_id)
     {

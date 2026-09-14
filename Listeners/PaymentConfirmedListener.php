@@ -4,6 +4,7 @@ namespace App\Modules\Shop\Listeners;
 
 use App\Modules\Payments\Events\PaymentConfirmed;
 use App\Modules\Shop\Models\Order;
+use App\Modules\Shop\Services\OrderService;
 use Illuminate\Support\Facades\Log;
 
 class PaymentConfirmedListener
@@ -21,6 +22,13 @@ class PaymentConfirmedListener
         if (! $order) {
             return;
         }
+
+        // What the gateway charged is what the customer paid: the tax is final now
+        $meta = $payment->metadata ?? [];
+        $source = ($meta['tax_source'] ?? 'estimate') === 'estimate' ? 'gateway:' . $payment->gateway : $meta['tax_source'];
+        OrderService::applyPayment($order, [
+            'tax' => $payment->tax, 'total' => $payment->total, 'subtotal' => $payment->subtotal, 'shipping' => $payment->shipping,
+        ], $source);
 
         try {
             $workflow = \Workflow::get($order, 'order');

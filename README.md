@@ -37,9 +37,10 @@ class, its name in `payment_methods`.
 ## Taxes
 
 The cart and the order show a **tax estimate** computed from the customer's billing data: the VAT number of their
-company and the country of their address (`country_code` is required on addresses since rapyd-admin 9.8). A payment
-gateway able to compute taxes may replace the estimate with the final amount; the order records the rate, the rule
-and the source (`tax_rate`, `tax_reason`, `tax_source`, `tax_final`).
+company and the country of their address (`country_code` is required on addresses since rapyd-admin 9.8). When a gateway
+confirms the payment (`PaymentConfirmed` of `zofe/payments-module`), what it charged becomes the final tax and total
+of the order: with Stripe Tax (`STRIPE_AUTOMATIC_TAX=true`) the tax Stripe computed from the billing address, otherwise
+the estimate as it was. The order records rate, rule and source (`tax_rate`, `tax_reason`, `tax_source`, `tax_final`).
 
 ```dotenv
 SHOP_TAX_RESOLVER=flat      # flat (default): SHOP tax rate for everybody

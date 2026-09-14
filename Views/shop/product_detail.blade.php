@@ -52,7 +52,9 @@
 
             <div class="d-flex flex-wrap gap-2 mt-3">
                 <x-rpd::button label="Add to cart" icon="cart-plus" click="dispatchSelf('addToCart')" />
-                <a href="{{ route('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> Go to cart</a>
+                @if(Cart::count() > 0)
+                    <a href="{{ route('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> Go to cart ({{ Cart::count() }})</a>
+                @endif
             </div>
         </div>
 
