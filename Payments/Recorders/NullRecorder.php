@@ -18,7 +18,7 @@ class NullRecorder implements PaymentRecorder
         return null;
     }
 
-    public function findPending(Payable $payable): ?object
+    public function findPending(Payable $payable, bool $samePeriod = false): ?object
     {
         return null;
     }

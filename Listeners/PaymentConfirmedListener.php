@@ -29,12 +29,15 @@ class PaymentConfirmedListener
 
     protected function orderPaid(Order $order, $payment): void
     {
-        // What the gateway charged is what the customer paid: the tax is final now
+        // The gateway's amounts replace the estimate only when the gateway computed the tax itself
+        // (Stripe Tax, a merchant of record): a plain card charge of the gross amounts keeps the local estimate.
         $meta = $payment->metadata ?? [];
-        $source = ($meta['tax_source'] ?? 'estimate') === 'estimate' ? 'gateway:' . $payment->gateway : $meta['tax_source'];
-        OrderService::applyPayment($order, [
-            'tax' => $payment->tax, 'total' => $payment->total, 'subtotal' => $payment->subtotal, 'shipping' => $payment->shipping,
-        ], $source);
+        if (! empty($meta['tax_final'])) {
+            $source = ($meta['tax_source'] ?? 'estimate') === 'estimate' ? 'gateway:' . $payment->gateway : $meta['tax_source'];
+            OrderService::applyPayment($order, [
+                'tax' => $payment->tax, 'total' => $payment->total, 'subtotal' => $payment->subtotal, 'shipping' => $payment->shipping,
+            ], $source);
+        }
 
         try {
             $workflow = \Workflow::get($order, 'order');

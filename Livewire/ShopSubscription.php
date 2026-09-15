@@ -40,6 +40,7 @@ class ShopSubscription extends Component
     public function pay(string $key): void
     {
         $method = app(PaymentMethods::class)->find($key);
+        $this->subscription->firstPeriod = $this->subscription->status === 'pending';   // the activation is part of the first period
         $pending = app(PaymentRecorder::class)->findPending($this->subscription);
         if (! $method || ! $method->available($this->subscription)) {
             return;

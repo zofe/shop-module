@@ -186,4 +186,19 @@ class SubscriptionsTest extends TestCase
             ->assertRedirect();
         $this->assertSame(1, Subscription::where('user_id', $this->user->id)->where('period', 'yearly')->count());
     }
+
+    public function test_the_pending_record_is_found_whatever_the_period_but_billed_once_per_period()
+    {
+        $recorder = app(\App\Modules\Shop\Payments\Contracts\PaymentRecorder::class);
+        if (! $recorder->available()) {
+            $this->markTestSkipped('payments-module not installed');
+        }
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        $first = SubscriptionService::billPeriod($subscription, true);
+
+        // a fresh instance (the customer page) does not know it is the first period
+        $fresh = Subscription::find($subscription->id);
+        $this->assertSame($first->id, $recorder->findPending($fresh)?->id);
+        $this->assertSame($first->id, SubscriptionService::billPeriod($fresh, true)->id, 'billing the same period twice opens one record');
+    }
 }

@@ -16,7 +16,7 @@ interface PaymentRecorder
     public function pending(Payable $payable, array $overrides = []): ?object;
 
     /** The open (pending) payment of this payable, if any. */
-    public function findPending(Payable $payable): ?object;
+    public function findPending(Payable $payable, bool $samePeriod = false): ?object;
 
     /** The gateway / the operator confirmed it. */
     public function confirm(object $payment, string $by = 'manual'): void;

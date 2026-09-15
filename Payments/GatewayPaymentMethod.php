@@ -58,8 +58,19 @@ class GatewayPaymentMethod implements PaymentMethod
 
     public function start(Payable $payable, ?object $payment = null): PaymentStart
     {
-        $amounts = $payable->payableAmounts();
-        $links = $payable->payableLinks();
+        // The pending record is what the customer owes (a first period with its activation, a renewal…):
+        // the gateway collects that, not what the payable computes right now.
+        if ($payment) {
+            $amounts = ['total' => $payment->total, 'subtotal' => $payment->subtotal, 'tax' => $payment->tax, 'shipping' => $payment->shipping];
+            $links = array_filter(['order_id' => $payment->order_id, 'subscription_id' => $payment->subscription_id, 'ref_subscription_id' => $payment->ref_subscription_id]);
+            $description = $payment->description;
+            $items = method_exists($payment, 'items') ? $payment->items->map(fn ($i) => $i->getAttributes())->all() : $payable->payableItems();
+        } else {
+            $amounts = $payable->payableAmounts();
+            $links = $payable->payableLinks();
+            $description = $payable->payableDescription();
+            $items = $payable->payableItems();
+        }
 
         $data = new \App\Modules\Payments\Dto\CheckoutData(
             orderId:       $links['order_id'] ?? $links['subscription_id'] ?? $links['ref_subscription_id'] ?? $payable->payableId(),
@@ -67,11 +78,11 @@ class GatewayPaymentMethod implements PaymentMethod
             subtotal:      (float) ($amounts['subtotal'] ?? 0),
             tax:           (float) ($amounts['tax'] ?? 0),
             shipping:      (float) ($amounts['shipping'] ?? 0),
-            description:   $payable->payableDescription(),
+            description:   $description,
             currency:      config('payments.currency', 'eur'),
             customerEmail: $payable->payableCustomerEmail(),
             metadata:      array_merge($links, ['payable' => $payable->payableType()]),
-            items:         $payable->payableItems(),
+            items:         $items,
             paymentId:     $payment?->id,
         );
 

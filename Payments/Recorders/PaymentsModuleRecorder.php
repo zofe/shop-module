@@ -20,7 +20,7 @@ class PaymentsModuleRecorder implements PaymentRecorder
 
     public function pending(Payable $payable, array $overrides = []): ?object
     {
-        if ($existing = $this->findPending($payable)) {
+        if ($existing = $this->findPending($payable, samePeriod: true)) {
             return $existing;
         }
         $amounts = $payable->payableAmounts();
@@ -46,14 +46,24 @@ class PaymentsModuleRecorder implements PaymentRecorder
         return $payment;
     }
 
-    public function findPending(Payable $payable): ?object
+    /**
+     * The pending record of the payable. For a subscription: the amount due whatever the period
+     * (first period with the activation, or a renewal); $samePeriod narrows it to the period being
+     * billed now, so that billing twice does not open two records.
+     */
+    public function findPending(Payable $payable, bool $samePeriod = false): ?object
     {
         $query = \App\Modules\Payments\Models\Payment::query()->where('status', 'pending');
-        foreach ($payable->payableLinks() as $column => $value) {
-            $query->where($column, $value);
-        }
         if ($payable->payableType() === 'subscription') {
-            $query->where('description', $payable->payableDescription());   // one per period
+            $id = $payable->payableId();
+            $query->where(fn ($q) => $q->where('subscription_id', $id)->orWhere('ref_subscription_id', $id));
+            if ($samePeriod) {
+                $query->where('description', $payable->payableDescription());
+            }
+        } else {
+            foreach ($payable->payableLinks() as $column => $value) {
+                $query->where($column, $value);
+            }
         }
 
         return $query->orderByDesc('created_at')->first();
