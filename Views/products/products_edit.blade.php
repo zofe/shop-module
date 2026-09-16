@@ -14,6 +14,13 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
             <x-rpd::input col="col-md-4" model="product.sku" label="Sku" />
         </div>
 
+        @if(($product->type ?? null) !== 'inventory_item')
+            <div class="row">
+                <x-rpd::select col="col-md-4" model="product.provisioner" label="Provisioning driver" :options="$provisioners" addempty />
+                <div class="col-md-8 small text-muted align-self-end pb-2">How a sold unit of this service is provisioned (config <code>shop.provisioning.drivers</code>); empty = default.</div>
+            </div>
+        @endif
+
         <div class="row">
             <x-rpd::input col="col-md-12" model="product.name" label="Name" />
             <x-rpd::rich-text col="col-md-12 mt-2" model="product.description" label="Description" />

@@ -26,7 +26,11 @@ class ServiceItemsTable extends Component
 
     public function getDataSet()
     {
-        $items = ServiceItem::orWhere('id', 'like', '%' . $this->search . '%');
+        $items = ServiceItem::with(['product', 'owner', 'license', 'origin'])
+            ->when($this->search, fn ($q) => $q->where(fn ($q) => $q
+                ->where('id', 'like', '%' . $this->search . '%')
+                ->orWhere('status', 'like', '%' . $this->search . '%')
+                ->orWhereHas('product', fn ($p) => $p->where('name', 'like', '%' . $this->search . '%'))));
 
         return $items = $items
             ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')

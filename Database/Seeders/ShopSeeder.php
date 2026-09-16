@@ -53,10 +53,15 @@ class ShopSeeder extends Seeder
             Order::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
         foreach ($data['order_items'] as $row) {
-            OrderItem::firstOrNew([
+            $item = OrderItem::firstOrNew([
                 'order_id' => $row['order_id'],
                 'prd_code' => $row['prd_code'],
-            ])->fill($row)->save();
+            ])->fill($row);
+            $item->save();
+            \App\Modules\Shop\Services\OrderService::syncAssignments($item);   // one assignment per unit, as the cart does
+        }
+        foreach ($data['inventory_items'] ?? [] as $row) {
+            \App\Modules\Shop\Models\InventoryItem::firstOrNew(['id' => $row['id']])->fill($row)->save();
         }
 
     }

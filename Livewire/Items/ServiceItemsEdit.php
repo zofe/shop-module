@@ -2,41 +2,32 @@
 
 namespace App\Modules\Shop\Livewire\Items;
 
-use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\ServiceItem;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 
-
-
+/** A sold service: owner, origin, driver, licence, and its workflow (suspend / resume / terminate). */
 class ServiceItemsEdit extends Component
 {
     use Authorize;
 
     public $item;
 
-    protected $rules = [
-       // 'item.product_id' => 'required',
-    ];
-
     public function booted()
     {
-        $this->authorize('admin|edit service items');
+        $this->authorize('admin|edit service items|view service items');
     }
 
     public function mount(?ServiceItem $item)
     {
-       $this->item = $item;
+        $this->item = $item;
     }
 
-    public function save()
+    #[On('refresh')]
+    public function refresh(): void
     {
-//        if($this->item->exists) {
-//            $this->rules['item.serial_number'] = 'required|unique:inventory_items,name,'.$this->item->id;
-//        }
-//
-//        $this->validate();
-        $this->item->save();
-        return redirect()->to(route_lang("service_items.table"));
+        $this->item = $this->item->fresh();
     }
 
     public function render()

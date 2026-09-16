@@ -24,7 +24,7 @@ class PaymentMethodsTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $address = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->actingAs($user);
-        app('cart')->add(PriceListItem::find(1), [], 1); // the licence, 299 € + 20% FR VAT
+        app('cart')->add(PriceListItem::find(3), [], 1); // the printer, 349 € + 20% FR VAT
         $order = OrderService::createOrderFromCart(null, $user->id, null, $address->id);
         \Workflow::get($order, 'order')->apply($order, 'pay_order');
         $order->save();

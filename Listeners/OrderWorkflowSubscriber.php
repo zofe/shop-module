@@ -2,6 +2,9 @@
 
 namespace App\Modules\Shop\Listeners;
 
+use App\Modules\Shop\Provisioning\ProvisioningService;
+use Illuminate\Support\Facades\Log;
+
 
 
 use App\Modules\Shop\Models\Order;
@@ -46,6 +49,22 @@ class OrderWorkflowSubscriber
         }
     }
 
+    /** Physical goods are shipped: every unit assigned first; hidden for orders of services only. */
+    public function onGuardShipOrder($event)
+    {
+        /** @var Order $order */
+        $order = $event->getSubject();
+
+        if (! $order->hasPhysicalItems()) {
+            $event->setBlocked(true, '');
+
+            return;
+        }
+        if ($order->workflow_count_incomplete_from($order->assignments) > 0) {
+            $event->setBlocked(true, 'assign every item before shipping');
+        }
+    }
+
     public function onGuardCompleteOrder($event)
     {
         /** @var Order $order */
@@ -55,7 +74,35 @@ class OrderWorkflowSubscriber
 
         if ($incomplete_count > 0) {
             $event->setBlocked(true, 'please check delivery items');
+
+            return;
         }
+        if (config('shop.provisioning.require_shipping', true) && $order->hasPhysicalItems() && $order->status !== 'shipped') {
+            $event->setBlocked(true, 'ship the order first');
+        }
+    }
+
+    /** The money is in: the services are generated, licensed and provisioned by their driver. */
+    public function onPaymentDoneProvision($event)
+    {
+        if (! config('shop.provisioning.auto_on_payment', true)) {
+            return;
+        }
+        /** @var Order $order */
+        $order = $event->getSubject();   // already in payment_done in memory: the guards of "generate" read the order through the assignment
+        try {
+            ProvisioningService::provisionOrder($order);
+        } catch (\Throwable $e) {
+            Log::error('Provisioning after payment failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /** The order is complete: the shipped inventory items belong to the customer. */
+    public function onCompleteOrder($event)
+    {
+        /** @var Order $order */
+        $order = $event->getSubject();
+        ProvisioningService::deliverOrder($order->fresh());
     }
 
     /**
@@ -87,6 +134,9 @@ class OrderWorkflowSubscriber
             'workflow.order.guard.pay_order',
             'App\Modules\Shop\Listeners\OrderWorkflowSubscriber@onGuardPayOrder'
         );
+        $events->listen('workflow.order.guard.ship_order', self::class . '@onGuardShipOrder');
+        $events->listen('workflow.order.completed.payment_done', self::class . '@onPaymentDoneProvision');
+        $events->listen('workflow.order.completed.complete_order', self::class . '@onCompleteOrder');
 
     }
 }

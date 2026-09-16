@@ -39,11 +39,6 @@ class ProductsVariantsTableEmbed extends Component
         $this->sortField = 'id';
 
         $this->product = $product;
-        $this->metadata = collect($product->metadata ?? [])
-            ->map(fn($value, $key) => ['key' => $key, 'value' => $value])
-            ->values()
-            ->toArray();
-
         $this->editable = $editable;
 
         $this->refreshVariants();
@@ -60,16 +55,14 @@ class ProductsVariantsTableEmbed extends Component
     {
         $this->variant = $variant ?: new ProductVariant;
         $this->variant->product_id = $this->product->id;
+        $this->metadata = $this->variant->metadata ?? [];   // key => value, edited by x-rpd::metadata
         $this->dispatch('show-modal',['editVariant']);
     }
 
     public function save()
     {
         $this->validate();
-        $metadata = collect($this->metadata)
-            ->filter(fn($value, $key) => trim((string)$key) !== '')
-            ->toArray();
-        $this->variant->metadata = $metadata;
+        $this->variant->metadata = self::cleanMetadata($this->metadata);
         $this->variant->save();
 
         $this->dispatch('hide-modals');
@@ -91,5 +84,18 @@ class ProductsVariantsTableEmbed extends Component
 
         return view('shop::products.products_variants_table_embed', compact('variants','variant'))
             ->layout('shop::admin');
+    }
+
+    /** The key => value pairs of the x-rpd::metadata editor, without empty keys; null when nothing is left. */
+    public static function cleanMetadata(array $metadata): ?array
+    {
+        $out = [];
+        foreach ($metadata as $key => $value) {
+            if (trim((string) $key) !== '') {
+                $out[trim((string) $key)] = $value;
+            }
+        }
+
+        return $out ?: null;
     }
 }

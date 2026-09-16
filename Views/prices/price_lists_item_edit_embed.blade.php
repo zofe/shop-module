@@ -26,6 +26,12 @@
                     <x-rpd::input model="item.trial_days" label="Trial days" />
                 </div>
             </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    <div class="small text-gray-500 mb-1">Service parameters (handed to the provisioning driver, e.g. devices: 5, hours: 2)</div>
+                    <x-rpd::metadata model="metadata" />
+                </div>
+            </div>
         </div>
         <div class="col-md-2 flex-center-end">
             <div>
@@ -45,6 +51,9 @@
             @if($item->activationPrice())<span class="me-3"><span class="text-gray-500">activation</span> {{ number_format($item->activationPrice(), 2) }} {{ Cart::currency() }}</span>@endif
             @if($item->trial_days)<span class="me-3"><span class="text-gray-500">trial</span> {{ $item->trial_days }} days</span>@endif
             @if(! $item->isPurchasable() && ! $item->isSubscribable())<span class="text-muted">not on sale</span>@endif
+            @if($item->metadata)
+                <div class="text-gray-500">@foreach($item->metadata as $k => $v){{ $k }}: {{ $v }}@if(! $loop->last), @endif @endforeach</div>
+            @endif
         </div>
         <div class="col-md-2 flex-center-end">
             <div>

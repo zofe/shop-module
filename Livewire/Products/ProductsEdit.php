@@ -17,6 +17,8 @@ class ProductsEdit extends Component
 
     public $product;
     public $availableCategories = [];
+    public $provisioners = [];
+
     public $types = [];
     public $image;
 
@@ -36,6 +38,7 @@ class ProductsEdit extends Component
             'product.description' => 'nullable',
             'product.sku'         => $uniqueSku,
             'product.category_id' => 'required',
+            'product.provisioner' => 'nullable|string',
             'image'               => 'nullable|image|max:2048',
         ];
     }
@@ -50,6 +53,7 @@ class ProductsEdit extends Component
         $this->product = $product;
         $this->availableCategories = ProductCategory::getNestedDropdown();
         $this->types = config('shop.deliverable_types');
+        $this->provisioners = app(\App\Modules\Shop\Provisioning\Provisioners::class)->options();
     }
 
     public function save(): mixed

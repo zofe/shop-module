@@ -19,6 +19,7 @@ class Order extends Model implements Payable
         'shipping_address' => 'array',
         'customer_data'    => 'array',
         'tax_final'        => 'boolean',
+        'shipped_at'       => 'datetime',
     ];
 
     protected $table = 'orders';
@@ -43,6 +44,12 @@ class Order extends Model implements Payable
                 'id',
                 'id')
             ->orderBy('deliverable_type');
+    }
+
+    /** Physical goods to assign and ship (inventory items), as opposed to services. */
+    public function hasPhysicalItems(): bool
+    {
+        return $this->assignments()->where('order_items_assignments.deliverable_type', 'inventory_item')->exists();
     }
 
     public function user()

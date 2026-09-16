@@ -86,6 +86,57 @@ the address has no country yet. Standard rates live in `App\Modules\Shop\Tax\EuR
 overrides them. Your own rules: a class implementing `App\Modules\Shop\Tax\Contracts\TaxResolver`, its name in
 `SHOP_TAX_RESOLVER`.
 
+## Provisioning
+
+What happens to the goods once they are sold. Everything goes through the workflows (`workflow.php`), so an
+application can change guards, listeners and transitions.
+
+**Services** (`service_item` products, and the service components of a bundle). A paid order, or an active
+subscription, gets one `ServiceItem` per unit with its owner (the company, else the user), its origin (the order
+assignment or the subscription item) and a `License`. The item's status is the `service_item` workflow
+(`new → active → suspended / terminated`) and every transition calls the product's **provisioning driver**:
+
+```php
+// config/shop.php
+'provisioning' => [
+    'drivers' => ['myapp' => App\Provisioning\MyAppProvisioner::class],
+    'auto_on_payment'  => true,   // services of an order are provisioned at payment_done
+    'require_shipping' => true,   // physical goods: the order completes only once shipped
+    'license_months'   => 12,     // licence of a service sold by an order
+],
+```
+
+```php
+class MyAppProvisioner implements App\Modules\Shop\Provisioning\Contracts\Provisioner
+{
+    public function provision(ServiceItem $service): void
+    {
+        $account = MyApp::createAccount($service->owner, $service->product);   // throw to abort the transition
+        $service->external_ref = $account->id;                                 // saved with the item
+    }
+    public function suspend(ServiceItem $service): void { MyApp::suspend($service->external_ref); }
+    public function resume(ServiceItem $service): void { MyApp::resume($service->external_ref); }
+    public function terminate(ServiceItem $service): void { MyApp::delete($service->external_ref); }
+}
+```
+
+The driver is chosen per product ("Provisioning driver" in the product form, `products.provisioner`); a product
+that names none gets the default driver, which only records the steps: the item and its licence are the
+provisioning (a support plan, a manual activation…).
+
+- Order: at `payment_done` the services are generated (`generate` on the assignment), licensed for
+  `license_months` and provisioned. Set `auto_on_payment` to false to leave the "generate" button to the operator.
+- Subscription: when a period is paid (or the trial starts) the services are provisioned, suspended ones resume and
+  the licences are extended to the next billing date; `past_due` suspends them, `cancel` terminates them.
+- `ProvisioningService::transition($service, 'suspend' | 'resume' | 'terminate')` from your own code, or the
+  buttons of the service item page (Provisioning → Services).
+
+**Physical goods** (`inventory_item` products). Each unit of an order is an assignment the operator fills with a
+serial number from the stock (`assign`). Then the order is shipped (`ship_order`: carrier and tracking code) and
+completed: the shipped items get the customer as owner and the status `sold`. An order with physical goods cannot
+be completed before every unit is assigned and, unless `require_shipping` is false, shipped. Orders of services only
+skip the shipping step.
+
 ## Tests
 
 ```bash

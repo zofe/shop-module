@@ -90,6 +90,7 @@ class SubscriptionItem extends Model implements BuyableItem
         return $this->priceListItem?->activationPrice() ?? 0.0;
     }
 
+    /** The service item provisioned for this line (deliverable_type service_item) */
     public function deliverable()
     {
         return $this->morphTo();

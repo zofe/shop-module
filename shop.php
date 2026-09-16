@@ -115,6 +115,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Provisioning
+    |--------------------------------------------------------------------------
+    |
+    | What happens to a sold service: a ServiceItem + licence per unit, driven by a
+    | Provisioner (App\Modules\Shop\Provisioning\Contracts\Provisioner) chosen per
+    | product (products.provisioner) among `drivers`; `default` when the product names
+    | none. The `service_item` workflow (new → active → suspended / terminated) calls
+    | the driver at every transition. Physical goods: assigned, shipped, then owned
+    | by the customer when the order completes.
+    |
+    */
+    'provisioning' => [
+        'default'  => App\Modules\Shop\Provisioning\DefaultProvisioner::class,
+        'drivers'  => [
+            // 'myapp' => App\Provisioning\MyAppProvisioner::class,
+        ],
+        'auto_on_payment'  => env('SHOP_PROVISION_ON_PAYMENT', true),   // services of a paid order are generated and provisioned at payment_done
+        'require_shipping' => env('SHOP_REQUIRE_SHIPPING', true),       // an order with physical goods completes only once shipped
+        'license_months'   => 12,                                       // licence of a service sold by an order
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Payment methods
     |--------------------------------------------------------------------------
     |

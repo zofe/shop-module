@@ -9,7 +9,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'name', 'slug', 'sku', 'sku_type', 'type',
+        'name', 'slug', 'sku', 'sku_type', 'type', 'provisioner',
         'category_id', 'description', 'image_path',
     ];
 

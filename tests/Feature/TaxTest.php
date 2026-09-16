@@ -106,13 +106,13 @@ class TaxTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1); // 299 €
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(3), [], 1); // the printer, 349 €
 
         $order = OrderService::createOrderFromCart(null, $user->id, null, $user->addresses()->first()->id);
 
         $this->assertSame([20.0, 'eu_b2c', 'eu_vat', false], [(float) $order->tax_rate, $order->tax_reason, $order->tax_source, (bool) $order->tax_final]);
-        $this->assertEquals(59.80, $order->tax);
-        $this->assertEquals(358.80, $order->total);
+        $this->assertEquals(69.80, $order->tax);
+        $this->assertEquals(418.80, $order->total);
         $this->assertEquals(20.0, $order->items()->first()->taxRate);
     }
 
@@ -148,7 +148,7 @@ class TaxTest extends TestCase
         $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
 
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1); // inventory item (physical)
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1); // the laptop: inventory item (physical)
         try {
             OrderService::createOrderFromCart(null, $user->id);
             $this->fail('no address, no order');
@@ -158,7 +158,7 @@ class TaxTest extends TestCase
         $this->assertNotNull(OrderService::createOrderFromCart(null, $user->id, null, $fr->id));
 
         app('cart')->destroy();
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(2), 1); // service: no address needed
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(4), 1); // the setup, a service: no address needed
         $this->assertNotNull(OrderService::createOrderFromCart(null, $user->id));
     }
 
@@ -168,15 +168,15 @@ class TaxTest extends TestCase
         $user = User::create(['name' => 'Ann', 'email' => 'ann@example.com', 'password' => 'x']);
         $fr = $user->addresses()->create(['address' => 'Rue 1', 'city' => 'Paris', 'zipcode' => '75001', 'country_code' => 'FR']);
         $this->seed(\App\Modules\Shop\Database\Seeders\ShopSeeder::class);
-        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(1), [], 1);
+        app('cart')->add(\App\Modules\Shop\Models\PriceListItem::find(3), [], 1);   // the printer, 349 €
         $order = OrderService::createOrderFromCart(null, $user->id, null, $fr->id);
         $this->assertSame([20.0, false], [(float) $order->tax_rate, (bool) $order->tax_final], 'estimated 20% FR');
 
-        // Stripe Tax found a 21% customer and charged 361.79
-        OrderService::applyPayment($order, ['tax' => 62.79, 'total' => 361.79, 'subtotal' => 299, 'shipping' => 0], 'stripe_tax');
+        // Stripe Tax found a 21% customer and charged 422.29
+        OrderService::applyPayment($order, ['tax' => 73.29, 'total' => 422.29, 'subtotal' => 349, 'shipping' => 0], 'stripe_tax');
 
         $order->refresh();
-        $this->assertSame([62.79, 361.79, 21.0, 'stripe_tax', true], [(float) $order->tax, (float) $order->total, (float) $order->tax_rate, $order->tax_source, (bool) $order->tax_final]);
+        $this->assertSame([73.29, 422.29, 21.0, 'stripe_tax', true], [(float) $order->tax, (float) $order->total, (float) $order->tax_rate, $order->tax_source, (bool) $order->tax_final]);
     }
 
     public function test_the_cart_shows_the_estimate_of_the_customer()

@@ -43,10 +43,7 @@ class PriceListsItemEditEmbed extends Component
     public function mount(?PriceListItem $priceListItem)
     {
         $this->item = $priceListItem;
-        $this->metadata = collect($model->metadata ?? [])
-            ->map(fn($value, $key) => ['key' => $key, 'value' => $value])
-            ->values()
-            ->toArray();
+        $this->metadata = $this->item->metadata ?? [];   // key => value, edited by x-rpd::metadata
         if($this->item->exists){
             $this->action = 'show';
         }
@@ -57,11 +54,7 @@ class PriceListsItemEditEmbed extends Component
     {
         $this->validate();
 
-        $clean = collect($this->metadata)
-            ->filter(fn($value, $key) => trim((string)$key) !== '')
-            ->toArray();
-      //  $this->item->metadata = $clean;
-
+        $this->item->metadata = \App\Modules\Shop\Livewire\Products\ProductsVariantsTableEmbed::cleanMetadata($this->metadata);
         $this->item->save();
         $this->action = 'show';
     }

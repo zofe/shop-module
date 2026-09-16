@@ -26,6 +26,17 @@
             <div class="mb-4">{!! $price->product->description !!}</div>
         @endif
 
+        @php $specs = array_merge($price->variant?->metadata ?? [], $price->metadata ?? []); @endphp
+        @if($specs)
+            {{-- the attributes of the variant and the parameters of the offer --}}
+            <dl class="row small mb-4">
+                @foreach($specs as $key => $value)
+                    <dt class="col-4 col-md-3 text-muted fw-normal text-capitalize border-0">{{ str_replace('_', ' ', $key) }}</dt>
+                    <dd class="col-8 col-md-9 border-0 mb-1">{{ $value }}</dd>
+                @endforeach
+            </dl>
+        @endif
+
         <div class="border rounded p-3 mb-3" style="background: var(--bs-tertiary-bg, #f8f9fa);">
             @php $fees = $price->fees(); $labels = ['monthly' => 'per month', 'yearly' => 'per year']; @endphp
             @if($price->isPurchasable())

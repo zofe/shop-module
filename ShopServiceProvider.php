@@ -76,7 +76,11 @@ class ShopServiceProvider extends RapydModuleServiceProvider
             'order'                 => Order::class,
             'order_item_assignment' => OrderItemAssignment::class,
             'subscription'          => \App\Modules\Shop\Models\Subscription::class,
+            'subscription_item'     => \App\Modules\Shop\Models\SubscriptionItem::class,
+            'license'               => \App\Modules\Shop\Models\License::class,
         ], true);
+
+        $this->app->singleton(\App\Modules\Shop\Provisioning\Provisioners::class);
     }
 
     public function boot(): void
@@ -86,6 +90,7 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         Event::subscribe(OrderWorkflowSubscriber::class);
         Event::subscribe(OrderItemAssignmentWorkflowSubscriber::class);
         Event::subscribe(\App\Modules\Shop\Listeners\SubscriptionWorkflowSubscriber::class);
+        Event::subscribe(\App\Modules\Shop\Listeners\ServiceItemWorkflowSubscriber::class);
         if (class_exists(PaymentConfirmed::class)) {
             Event::listen(PaymentConfirmed::class, PaymentConfirmedListener::class);
         }

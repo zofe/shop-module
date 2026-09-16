@@ -63,6 +63,11 @@ return [
                     'label' => 'order in process',
                 ]
             ],
+            'shipped' => [
+                'metadata' => [
+                    'label' => 'shipped',
+                ]
+            ],
             'completed' => [
                 'metadata' => [
                     'label' => 'order completed',
@@ -117,8 +122,19 @@ return [
                 ]
             ],
 
-            'complete_order' => [
+            // Physical goods: assigned by the operator, then shipped (carrier + tracking in a modal);
+            // hidden for orders of services only (see OrderWorkflowSubscriber::onGuardShipOrder).
+            'ship_order' => [
                 'from' => ['in_process'],
+                'to'   => 'shipped',
+                'metadata' => [
+                    'label' => 'ship order',
+                    'action' => 'shipOrder',
+                ]
+            ],
+
+            'complete_order' => [
+                'from' => ['in_process', 'shipped'],
                 'to'   => 'completed',
                 'metadata' => [
                     'label' => 'complete order',
@@ -176,6 +192,26 @@ return [
             ],
         ]
     ],
+    // A sold service: the driver (Provisioner) runs inside each transition.
+    'service_item' => [
+        'type'          => 'state_machine',
+        'marking_store' => ['type' => 'single_state', 'property' => 'status'],
+        'initial_marking' => 'new',
+        'supports'      => [\App\Modules\Shop\Models\ServiceItem::class],
+        'places' => [
+            'new'        => ['metadata' => ['label' => 'new']],
+            'active'     => ['metadata' => ['label' => 'active']],
+            'suspended'  => ['metadata' => ['label' => 'suspended']],
+            'terminated' => ['metadata' => ['label' => 'terminated', 'final' => true]],
+        ],
+        'transitions' => [
+            'provision' => ['from' => ['new'],                        'to' => 'active',     'metadata' => ['label' => 'provision']],
+            'suspend'   => ['from' => ['active'],                     'to' => 'suspended',  'metadata' => ['label' => 'suspend', 'class' => 'warning']],
+            'resume'    => ['from' => ['suspended'],                  'to' => 'active',     'metadata' => ['label' => 'resume']],
+            'terminate' => ['from' => ['new', 'active', 'suspended'], 'to' => 'terminated', 'metadata' => ['label' => 'terminate', 'class' => 'danger']],
+        ],
+    ],
+
     'subscription' => [
         'type'          => 'state_machine',
         'marking_store' => ['type' => 'single_state', 'property' => 'status'],

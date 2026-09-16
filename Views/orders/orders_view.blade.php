@@ -12,6 +12,7 @@
                 ></livewire:shop::orders.orders-modal-edit-embed>
 
                 <livewire:shop::orders.orders-assign-item-modal />
+                <livewire:shop::orders.orders-ship-modal />
 
 
                 <table class="table">
@@ -123,6 +124,16 @@
 
                     <dt class="col-4">Status</dt>
                     <dd class="col-8">{{ $order->status }}</dd>
+
+                    @if($order->shipped_at)
+                        <dt class="col-4">Shipped</dt>
+                        <dd class="col-8">
+                            <x-rpd::date-formatted :date="$order->shipped_at"></x-rpd::date-formatted>
+                            @if($order->carrier || $order->tracking_code)
+                                <div class="small text-muted">{{ $order->carrier }} {{ $order->tracking_code }}</div>
+                            @endif
+                        </dd>
+                    @endif
 
                     @php $payment = class_exists(\App\Modules\Payments\Models\Payment::class) ? \App\Modules\Payments\Models\Payment::where('order_id', $order->id)->latest()->first() : null; @endphp
                     @if($payment)

@@ -34,6 +34,9 @@ class OrderItemAssignmentWorkflowSubscriber
         if($assignment->deliverable_type == 'service_item' && $order && !$order->workflow_metadata('final', $order->status)) {
             if($assignment->deliverable_id) {
                 $event->setBlocked(true,'');
+            } elseif (! in_array($order->status, ['payment_done', 'in_process', 'shipped'], true)) {
+                // a service is provisioned once the order is paid (by the listener, or by the operator here)
+                $event->setBlocked(true, 'after payment');
             }
         } else {
             $event->setBlocked(true,'');

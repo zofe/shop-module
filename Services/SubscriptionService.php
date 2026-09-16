@@ -2,6 +2,8 @@
 
 namespace App\Modules\Shop\Services;
 
+use App\Modules\Shop\Provisioning\ProvisioningService;
+
 use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Models\SubscriptionItem;
@@ -52,6 +54,8 @@ class SubscriptionService
 
             if (! $subscription->onTrial()) {
                 self::billPeriod($subscription->fresh(), true);
+            } else {
+                ProvisioningService::provisionSubscription($subscription->fresh());   // the trial is the service, running
             }
 
             return $subscription->fresh();
@@ -147,6 +151,8 @@ class SubscriptionService
         }
         $subscription->save();
 
+        ProvisioningService::provisionSubscription($subscription);   // new services start, suspended ones resume, licences extend
+
         return $subscription;
     }
 
@@ -156,6 +162,7 @@ class SubscriptionService
         if ($subscription->status === 'active') {
             $subscription->status = 'past_due';
             $subscription->save();
+            ProvisioningService::suspendSubscription($subscription);
         }
 
         return $subscription;
@@ -180,6 +187,7 @@ class SubscriptionService
         $subscription->status = 'cancelled';
         $subscription->ends_at = ($endsAt ?? now())->toDateString();
         $subscription->save();
+        ProvisioningService::terminateSubscription($subscription);
 
         return $subscription;
     }

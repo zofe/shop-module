@@ -4,9 +4,7 @@ namespace App\Modules\Shop\Livewire\Orders;
 
 use Zofe\Rapyd\Modules\Auth\Traits\Authorize;
 use App\Modules\Shop\Models\OrderItemAssignment;
-use App\Modules\Shop\Services\LicenseService;
-use App\Modules\Shop\Services\ServicesService;
-use Zofe\Rapyd\Modules\Workflow\Models\WorkflowStep;
+use App\Modules\Shop\Provisioning\ProvisioningService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -38,30 +36,7 @@ class OrdersAssignmentEmbed extends Component
     public function generateServiceAndLicense($morphableType, $morphableId)
     {
         if ($this->assignment->id == $morphableId) {
-            $workflow   = \Workflow::get($this->assignment, 'order_item_assignment');
-            $fromPlaces = $workflow->getMarking($this->assignment)->getPlaces();
-
-            // transition must be applied before setting deliverable_id — guard blocks if it is already set
-            $workflow->apply($this->assignment, 'generate');
-
-            $product = $this->assignment->orderItem->priceListItem->product;
-            $service = ServicesService::createServiceItemFromProduct($product);
-            LicenseService::createLicenseFromProduct($product, 12);
-
-            $this->assignment->deliverable_id   = $service->id;
-            $this->assignment->deliverable_type = 'service_item';
-            $this->assignment->save();
-
-            WorkflowStep::create([
-                'user_id'           => auth()->id(),
-                'company_id'        => auth()->user()->company_id ?? null,
-                'workflowable_type' => get_class($this->assignment),
-                'workflowable_id'   => $this->assignment->getKey(),
-                'places'            => $workflow->getMarking($this->assignment)->getPlaces(),
-                'places_from'       => $fromPlaces,
-                'last_transition'   => 'generate',
-            ]);
-
+            ProvisioningService::generateForAssignment($this->assignment);
             $this->assignment = $this->assignment->fresh();
 
             $this->dispatch('savedStep');

@@ -41,49 +41,49 @@ class SubscriptionsTest extends TestCase
 
     public function test_the_price_list_says_how_a_product_is_sold()
     {
-        $licence = PriceListItem::find(1);   // 5 users
-        $this->assertTrue($licence->isPurchasable());
-        $this->assertSame([], $licence->fees());
-        $this->assertSame('Rapyd Admin — Professional License — 5 users', $licence->name);
-        $this->assertSame('RPD-PRO-5', $licence->sku);
-        $this->assertSame(499.0, PriceListItem::find(3)->getBuyablePrice(), 'the 20 users variant');
+        $laptop = PriceListItem::find(1);   // 16 GB / 512 GB
+        $this->assertTrue($laptop->isPurchasable());
+        $this->assertSame([], $laptop->fees());
+        $this->assertSame('Business Laptop 14" — 16 GB / 512 GB', $laptop->name);
+        $this->assertSame('HW-LAPTOP-16', $laptop->sku);
+        $this->assertSame(1590.0, PriceListItem::find(2)->getBuyablePrice(), 'the 32 GB variant');
 
-        $support = PriceListItem::find(2);
-        $this->assertFalse($support->isPurchasable());
-        $this->assertSame(['monthly' => 14.9, 'yearly' => 149.0], $support->fees());
-        $this->assertSame(20.0, $support->activationPrice());
+        $assistance = PriceListItem::find(7);
+        $this->assertFalse($assistance->isPurchasable());
+        $this->assertSame(['monthly' => 29.0, 'yearly' => 290.0], $assistance->fees());
+        $this->assertSame(49.0, $assistance->activationPrice());
 
-        $this->assertSame(14, PriceListItem::find(4)->trial_days);
-        $this->assertTrue(PriceListItem::find(5)->product->isBundle());
+        $this->assertSame(14, PriceListItem::find(8)->trial_days);
+        $this->assertTrue(PriceListItem::find(9)->product->isBundle());
         $this->assertSame(PriceListItem::find(1)->id, PriceList::default()->itemFor(1, 1)->id);
     }
 
     public function test_the_cart_sells_one_time_products_only()
     {
-        app('cart')->add(PriceListItem::find(3), [], 1);
-        $this->assertSame(499.0, (float) app('cart')->content()->first()->price);
+        app('cart')->add(PriceListItem::find(2), [], 1);
+        $this->assertSame(1590.0, (float) app('cart')->content()->first()->price);
 
-        app('cart')->add(PriceListItem::find(2), [], 1);   // a fee: 0 in the cart, it is not a purchase
+        app('cart')->add(PriceListItem::find(7), [], 1);   // a fee: 0 in the cart, it is not a purchase
         $this->assertSame(0.0, (float) app('cart')->content()->last()->price);
     }
 
     public function test_subscribe_creates_the_subscription_with_its_items_pending_the_first_payment()
     {
         Carbon::setTestNow('2026-09-14');
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(7), 'monthly');
 
         $this->assertSame(['monthly', 'pending', '2026-09-14', '2026-09-14'], [
             $subscription->period, $subscription->status, $subscription->start_date->toDateString(), $subscription->next_billing_at->toDateString(),
         ]);
         $this->assertCount(1, $subscription->items);
         $item = $subscription->items->first();
-        $this->assertSame(['RPD-SUP', 'monthly', 14.9, 1, 22.0], [$item->prd_code, $item->period, (float) $item->price, (int) $item->qty, (float) $item->taxRate]);
-        $this->assertEqualsWithDelta(14.9 * 1.22, $subscription->total, 0.01);
+        $this->assertSame(['PL-ASSIST', 'monthly', 29.0, 1, 22.0], [$item->prd_code, $item->period, (float) $item->price, (int) $item->qty, (float) $item->taxRate]);
+        $this->assertEqualsWithDelta(29.0 * 1.22, $subscription->total, 0.01);
         $this->assertSame(0, Order::where('user_id', $this->user->id)->count(), 'no order is involved');
 
         // the first period as a payable: the fee plus the activation
         $subscription->firstPeriod = true;
-        $this->assertEqualsWithDelta((14.9 + 20) * 1.22, $subscription->payableAmounts()['total'], 0.01);
+        $this->assertEqualsWithDelta((29.0 + 49) * 1.22, $subscription->payableAmounts()['total'], 0.01);
         $this->assertCount(2, $subscription->payableItems());
         $this->assertSame(['subscription_id' => $subscription->id], $subscription->payableLinks());
         $subscription->firstPeriod = false;
@@ -94,7 +94,7 @@ class SubscriptionsTest extends TestCase
     public function test_a_confirmed_payment_activates_and_extends_the_subscription()
     {
         Carbon::setTestNow('2026-09-14');
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'yearly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(7), 'yearly');
 
         SubscriptionService::paymentConfirmed($subscription);
         $this->assertSame(['active', '2027-09-14'], [$subscription->status, $subscription->next_billing_at->toDateString()]);
@@ -110,7 +110,7 @@ class SubscriptionsTest extends TestCase
     public function test_a_trial_starts_free_and_is_billed_at_its_end()
     {
         Carbon::setTestNow('2026-09-14');
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(4), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(8), 'monthly');
         $this->assertSame(['trialing', '2026-09-28', '2026-09-28'], [$subscription->status, $subscription->trial_ends_at->toDateString(), $subscription->next_billing_at->toDateString()]);
 
         Artisan::call('shop:bill-subscriptions', ['--date' => '2026-09-27']);
@@ -128,7 +128,7 @@ class SubscriptionsTest extends TestCase
     {
         Carbon::setTestNow('2026-09-14');
         config(['shop.subscriptions.grace_days' => 7]);
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(7), 'monthly');
         SubscriptionService::paymentConfirmed($subscription);   // active until 2026-10-14
 
         Artisan::call('shop:bill-subscriptions', ['--date' => '2026-10-20']);
@@ -147,39 +147,39 @@ class SubscriptionsTest extends TestCase
 
     public function test_a_bundle_fee_adds_its_components_at_zero_and_items_can_be_added_and_removed()
     {
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(5), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(9), 'monthly');
         $this->assertCount(3, $subscription->items, 'the bundle line and its two components');
-        $this->assertSame([17.9, 0.0, 0.0], $subscription->items->pluck('price')->map(fn ($p) => (float) $p)->all());
-        $this->assertEqualsWithDelta(17.9 * 1.22, $subscription->total, 0.01);
+        $this->assertSame([34.9, 0.0, 0.0], $subscription->items->pluck('price')->map(fn ($p) => (float) $p)->all());
+        $this->assertEqualsWithDelta(34.9 * 1.22, $subscription->total, 0.01);
 
-        $line = SubscriptionService::addItem($subscription, PriceListItem::find(2));
-        $this->assertEqualsWithDelta((17.9 + 14.9) * 1.22, $subscription->fresh()->total, 0.01);
+        $line = SubscriptionService::addItem($subscription, PriceListItem::find(7));
+        $this->assertEqualsWithDelta((34.9 + 29.0) * 1.22, $subscription->fresh()->total, 0.01);
 
-        SubscriptionService::removeItem($subscription->items()->whereNull('bundle_code')->orWhere('bundle_code', 0)->where('price', '>', 15)->first());
-        $this->assertEqualsWithDelta(14.9 * 1.22, $subscription->fresh()->total, 0.01, 'bundle and its components gone');
+        SubscriptionService::removeItem($subscription->items()->whereNull('bundle_code')->orWhere('bundle_code', 0)->where('price', '>', 30)->first());
+        $this->assertEqualsWithDelta(29.0 * 1.22, $subscription->fresh()->total, 0.01, 'bundle and its components gone');
         $this->assertCount(1, $subscription->fresh()->items);
     }
 
     public function test_the_customer_and_admin_pages()
     {
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(7), 'monthly');
 
         $this->actingAs($this->user);
         $this->get(route('shop.subscriptions'))->assertOk()->assertSee($subscription->shortId);
-        $this->get(route('shop.subscription', $subscription))->assertOk()->assertSee('RPD-SUP')->assertSee('Payment due');
+        $this->get(route('shop.subscription', $subscription))->assertOk()->assertSee('PL-ASSIST')->assertSee('Payment due');
 
         $other = User::create(['name' => 'Bob', 'email' => 'bob@example.com', 'password' => 'x']);
         Livewire::actingAs($other)->test('shop::shop-subscription', ['subscription' => $subscription])->assertForbidden();
 
         $this->actingAs(User::where('email', 'admin@laravel')->firstOrFail());
         $this->get(route('subscriptions.table'))->assertOk()->assertSee($subscription->shortId);
-        $this->get(route('subscriptions.view', $subscription))->assertOk()->assertSee('RPD-SUP')->assertSee('Next billing');
+        $this->get(route('subscriptions.view', $subscription))->assertOk()->assertSee('PL-ASSIST')->assertSee('Next billing');
     }
 
     public function test_subscribe_from_the_product_page()
     {
         $this->actingAs($this->user);
-        Livewire::test('shop::shop', ['slugs' => 'support-services/priority-support'])
+        Livewire::test('shop::shop', ['slugs' => 'plans/remote-assistance'])
             ->assertSee('Subscribe per month')
             ->assertSee('activation, once')
             ->call('subscribe', 'yearly')
@@ -193,7 +193,7 @@ class SubscriptionsTest extends TestCase
         if (! $recorder->available()) {
             $this->markTestSkipped('payments-module not installed');
         }
-        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(2), 'monthly');
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(7), 'monthly');
         $first = SubscriptionService::billPeriod($subscription, true);
 
         // a fresh instance (the customer page) does not know it is the first period

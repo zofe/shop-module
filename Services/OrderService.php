@@ -203,19 +203,6 @@ class OrderService
                     ]);
                     $assignment->save();
 
-                    // Se è un servizio, genera la licenza e associa
-                    if ($orderItem->deliverable_type === \App\Models\ServiceItem::class) {
-                        $license = License::create([
-                            'service_item_id' => $orderItem->deliverable_id,
-                            'order_id'        => $orderItem->order_id,
-                            'order_item_id'   => $orderItem->id,
-                            'status'          => 'active',
-                            'activated_at'    => now(),
-                            'expires_at'      => now()->addYear(),
-                        ]);
-                        $assignment->license_id = $license->id;
-                        $assignment->save();
-                    }
                 }
             }
 
@@ -228,10 +215,6 @@ class OrderService
                     ->get();
 
                 foreach ($assignments as $assignment) {
-                    // Se c'è una licenza collegata, cancellala
-                    if ($assignment->license_id) {
-                        License::where('id', $assignment->license_id)->delete();
-                    }
                     $assignment->delete();
                 }
             }
