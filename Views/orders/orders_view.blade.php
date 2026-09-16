@@ -186,11 +186,7 @@
                     @if($order->shipping_address)
                         <dt class="col-4">Shipping</dt>
                         <dd class="col-8">
-                            @foreach($order->shipping_address as $key=>$value)
-                                <span class="badge bg-primary position-relative">
-                                    {{ $key }}: {{ $value }}
-                                </span>
-                            @endforeach
+                            @include('shop::includes.address_lines', ['address' => $order->shipping_address])
                         </dd>
                     @endif
 

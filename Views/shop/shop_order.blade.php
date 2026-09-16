@@ -16,14 +16,7 @@
 
             @if($order->shipping_address)
                 <x-rpd::card title="Shipping">
-                    <dt class="col-4">Address</dt>
-                    <dd class="col-8">
-                        @foreach($order->shipping_address as $key=>$value)
-                            <span class="badge bg-primary position-relative">
-                                    {{ $key }}: {{ $value }}
-                                </span>
-                        @endforeach
-                    </dd>
+                    @include('shop::includes.address_lines', ['address' => $order->shipping_address])
                 </x-rpd::card>
             @endif
         </div>
