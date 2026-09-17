@@ -40,6 +40,7 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         parent::register();
 
         $this->mergeConfigFrom(__DIR__ . '/shop.php', 'shop');
+        $this->registerPermissions();
 
         $this->app->bind('cart', Cart::class);
 
@@ -81,6 +82,20 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         ], true);
 
         $this->app->singleton(\App\Modules\Shop\Provisioning\Provisioners::class);
+    }
+
+    /** The permissions of the shop join those of rapyd-admin (config auth.*), role by role. */
+    protected function registerPermissions(): void
+    {
+        $permissions = config('shop.permissions', []);
+        config(['auth.permissions' => array_values(array_unique(array_merge(config('auth.permissions', []), $permissions)))]);
+        foreach (config('shop.role_permissions', []) as $role => $names) {
+            $current = config("auth.role_permissions.{$role}");
+            if ($current === null && ! in_array($role, config('auth.roles', []), true)) {
+                continue;   // a role this application does not have
+            }
+            config(["auth.role_permissions.{$role}" => array_values(array_unique(array_merge($current ?? [], $names)))]);
+        }
     }
 
     public function boot(): void

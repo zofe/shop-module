@@ -195,4 +195,33 @@ class ProvisioningTest extends TestCase
         $this->assertSame('active', $service->status);
         $this->assertSame($subscription->trial_ends_at->toDateString(), $service->license->expire_date->toDateString());
     }
+
+    public function test_the_activation_policy_of_a_product_decides_who_activates_a_generated_service()
+    {
+        // manual: generated and licensed at payment, activated by the operator
+        Product::find(4)->update(['activation' => 'manual']);
+        $order = $this->paidOrder([5]);
+        $service = ServiceItem::find($order->assignments()->first()->deliverable_id);
+        $this->assertSame(['new', 'inactive'], [$service->status, $service->license->status], 'generated, not activated');
+        $this->assertMatchesRegularExpression('/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/', $service->license->key);
+
+        ProvisioningService::activate($service);
+        $this->assertSame(['active', 'active'], [$service->fresh()->status, $service->fresh()->license->status]);
+
+        // customer: a reseller bought it, the end user redeems the key and becomes the owner
+        config(['shop.provisioning.activation' => 'customer']);
+        Product::find(4)->update(['activation' => null]);   // follows the shop's policy
+        $order = $this->paidOrder([5]);
+        $service = ServiceItem::find($order->assignments()->first()->deliverable_id);
+        $this->assertSame('new', $service->status);
+
+        $endUser = User::create(['name' => 'Eve', 'email' => 'eve@example.com', 'password' => 'x']);
+        $this->assertNull(ProvisioningService::redeemable('AAAA-BBBB-CCCC-DDDD'), 'unknown key');
+        $found = ProvisioningService::redeemable($service->license->key);
+        $this->assertSame($service->id, $found->id);
+        ProvisioningService::activate($found, $endUser);
+        $service = $service->fresh();
+        $this->assertSame(['active', $endUser->id, $endUser->id], [$service->status, $service->owner_id, $service->license->owner_id]);
+        $this->assertNull(ProvisioningService::redeemable($service->license->key), 'a key is redeemed once');
+    }
 }

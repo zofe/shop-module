@@ -32,6 +32,9 @@ return new class extends Migration
             if (! Schema::hasColumn('products', 'provisioner')) {
                 $table->string('provisioner', 60)->nullable();
             }
+            if (! Schema::hasColumn('products', 'activation')) {
+                $table->string('activation', 20)->nullable();   // automatic | manual | customer, null = config shop.provisioning.activation
+            }
         });
 
         Schema::table('orders', function (Blueprint $table) {
@@ -55,7 +58,7 @@ return new class extends Migration
         Schema::table('service_items', function (Blueprint $table) {
             $table->dropColumn(['origin_type', 'origin_id', 'provisioner', 'external_ref', 'metadata']);
         });
-        Schema::table('products', fn (Blueprint $table) => $table->dropColumn('provisioner'));
+        Schema::table('products', fn (Blueprint $table) => $table->dropColumn(['provisioner', 'activation']));
         Schema::table('orders', fn (Blueprint $table) => $table->dropColumn(['carrier', 'tracking_code', 'shipped_at']));
     }
 };

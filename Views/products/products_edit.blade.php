@@ -17,7 +17,8 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
         @if(($product->type ?? null) !== 'inventory_item')
             <div class="row">
                 <x-rpd::select col="col-md-4" model="product.provisioner" label="Provisioning driver" :options="$provisioners" addempty />
-                <div class="col-md-8 small text-muted align-self-end pb-2">How a sold unit of this service is provisioned (config <code>shop.provisioning.drivers</code>); empty = default.</div>
+                <x-rpd::select col="col-md-4" model="product.activation" label="Activation" :options="['automatic' => 'Automatic (at payment)', 'manual' => 'Manual (by the operator)', 'customer' => 'By the customer (licence key)']" addempty />
+                <div class="col-md-4 small text-muted align-self-end pb-2">Empty = the shop's defaults (<code>shop.provisioning</code>). "By the customer" fits B2B: sold to a reseller, activated by the end user with the key.</div>
             </div>
         @endif
 

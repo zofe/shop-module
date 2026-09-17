@@ -73,6 +73,10 @@ class OrderService
 
         self::addItemsFromCart('default', $order);
 
+        // The cart is the order now: emptied here (not only by the cart page), so the next order
+        // gets its own uuid whoever creates it (a page, a test, an API).
+        Cart::destroy();
+
         return $order;
     }
 

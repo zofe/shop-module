@@ -129,8 +129,8 @@
                         <dt class="col-4">Shipped</dt>
                         <dd class="col-8">
                             <x-rpd::date-formatted :date="$order->shipped_at"></x-rpd::date-formatted>
-                            @if($order->carrier || $order->tracking_code)
-                                <div class="small text-muted">{{ $order->carrier }} {{ $order->tracking_code }}</div>
+                            @if($order->carrier || $order->tracking_code || $order->shipping_document)
+                                <div class="small text-muted">{{ $order->carrier }} {{ $order->tracking_code }}@if($order->shipping_document) · DDT {{ $order->shipping_document }}@endif</div>
                             @endif
                         </dd>
                     @endif

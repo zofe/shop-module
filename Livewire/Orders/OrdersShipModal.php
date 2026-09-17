@@ -19,11 +19,14 @@ class OrdersShipModal extends Component
 
     public ?string $trackingCode = null;
 
+    public ?string $document = null;   // DDT / delivery note reference
+
     public ?string $errorMessage = null;
 
     protected $rules = [
         'carrier'      => 'nullable|string|max:60',
         'trackingCode' => 'nullable|string|max:120',
+        'document'     => 'nullable|string|max:120',
     ];
 
     public function booted()
@@ -37,6 +40,7 @@ class OrdersShipModal extends Component
         $this->orderId = $morphableId;
         $this->carrier = null;
         $this->trackingCode = null;
+        $this->document = null;
         $this->errorMessage = null;
         $this->dispatch('show-modal', ['shipOrder']);
     }
@@ -56,6 +60,7 @@ class OrdersShipModal extends Component
 
         $order->carrier = $this->carrier;
         $order->tracking_code = $this->trackingCode;
+        $order->shipping_document = $this->document;
         $order->shipped_at = now();
         $workflow->apply($order, 'ship_order');
         $order->save();
@@ -69,7 +74,7 @@ class OrdersShipModal extends Component
             'places_from'       => $fromPlaces,
             'last_transition'   => 'ship_order',
             'transition_date'   => now(),
-            'meta'              => array_filter(['carrier' => $this->carrier, 'tracking_code' => $this->trackingCode]),
+            'meta'              => array_filter(['carrier' => $this->carrier, 'tracking_code' => $this->trackingCode, 'document' => $this->document]),
         ]);
 
         $this->orderId = null;

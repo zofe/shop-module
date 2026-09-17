@@ -9,7 +9,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'name', 'slug', 'sku', 'sku_type', 'type', 'provisioner',
+        'name', 'slug', 'sku', 'sku_type', 'type', 'provisioner', 'activation',
         'category_id', 'description', 'image_path',
     ];
 
@@ -41,6 +41,12 @@ class Product extends Model
     }
 
     /** The delivery type of a product: its own, or for a bundle the one of its components (physical wins). */
+    /** How a sold unit of this service is activated: the product's choice, else the shop's (config shop.provisioning.activation). */
+    public function activationPolicy(): string
+    {
+        return $this->activation ?: config('shop.provisioning.activation', 'automatic');
+    }
+
     public function deliverableType(): string
     {
         if (! $this->isBundle()) {

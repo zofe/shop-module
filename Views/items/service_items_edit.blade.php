@@ -33,11 +33,17 @@
                 <dd class="col-8">
                     @if($item->license)
                         {{ $item->license->shortId }} · {{ $item->license->status }} ·
-                        {{ optional($item->license->activation_date)->format('Y-m-d') }} → {{ optional($item->license->expire_date)->format('Y-m-d') ?? 'no expiry' }}
+                        {{ optional($item->license->activation_date)->format('Y-m-d') ?? 'not activated' }} → {{ optional($item->license->expire_date)->format('Y-m-d') ?? 'no expiry' }}
+                        @if($item->license->key)
+                            <div class="font-monospace small mt-1">{{ $item->license->key }}</div>
+                        @endif
                     @else
                         —
                     @endif
                 </dd>
+
+                <dt class="col-4">Activation</dt>
+                <dd class="col-8">{{ optional($item->product)->activationPolicy() ?? '—' }}</dd>
 
                 @if($item->metadata)
                     <dt class="col-4">Driver data</dt>

@@ -131,9 +131,16 @@ return [
         'drivers'  => [
             // 'myapp' => App\Provisioning\MyAppProvisioner::class,
         ],
-        'auto_on_payment'  => env('SHOP_PROVISION_ON_PAYMENT', true),   // services of a paid order are generated and provisioned at payment_done
+        'auto_on_payment'  => env('SHOP_PROVISION_ON_PAYMENT', true),   // services of a paid order are generated (record + licence) at payment_done
         'require_shipping' => env('SHOP_REQUIRE_SHIPPING', true),       // an order with physical goods completes only once shipped
         'license_months'   => 12,                                       // licence of a service sold by an order
+
+        // When a generated service is activated (the `provision` transition, which calls the driver):
+        //   automatic  as soon as it is generated (a service the buyer uses: support, setup…)
+        //   manual     by the operator (the "provision" button of the service item) or by your own code
+        //   customer   by the end user, who redeems the licence key (B2B: sold to a reseller, activated by the final customer)
+        // The default of the shop; a product can choose its own (products.activation).
+        'activation' => env('SHOP_ACTIVATION', 'automatic'),
     ],
 
     /*

@@ -7,6 +7,11 @@
         <div class="col-md-8">
 
             <x-rpd::card title="Subscription items">
+                <x-slot name="buttons">
+                    @if(! in_array($subscription->status, ['cancelled']))
+                        <x-rpd::button size="sm" color="outline-primary" label="Add item" icon="plus" click="openLine()" />
+                    @endif
+                </x-slot>
                 <table class="table table-sm">
                     <thead>
                     <tr>
@@ -23,7 +28,10 @@
                         <tr wire:key="si-{{ $item->id }}" class="{{ $item->bundle_code ? 'text-muted small' : '' }}">
                             <td>{{ $item->prd_code }}</td>
                             <td>{{ $item->bundle_code ? '↳ ' : '' }}{{ $item->name }}
-                                @if(! $item->bundle_code)<x-rpd::icon name="trash-alt" click="removeItem({{ $item->id }})" confirm="Remove {{ $item->name }}?" />@endif</td>
+                                @if(! $item->bundle_code)
+                                    <x-rpd::icon name="edit" click="openLine({{ $item->id }})" />
+                                    <x-rpd::icon name="trash-alt" click="removeItem({{ $item->id }})" confirm="Remove {{ $item->name }}?" />
+                                @endif</td>
                             <td><span class="badge bg-secondary">{{ $item->period }}</span></td>
                             <td class="text-end">{{ number_format($item->price, 2) }} {{ Cart::currency() }}</td>
                             <td class="text-end">{{ $item->qty }}</td>
@@ -37,12 +45,6 @@
                     <tr><td colspan="4"></td><td class="text-end"><strong>Total / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td></tr>
                     </tfoot>
                 </table>
-                @if(count($addable))
-                    <div class="row align-items-end">
-                        <x-rpd::select-list col="col-md-8" model="newItem" :options="$addable" placeholder="Add a fee…" label="Add to the subscription" />
-                        <div class="col-md-4 pb-3"><x-rpd::button size="sm" color="outline-primary" label="Add" icon="plus" click="addItem" /></div>
-                    </div>
-                @endif
             </x-rpd::card>
 
             @if($hasRecorder)
@@ -126,4 +128,20 @@
             </x-rpd::card>
         </div>
     </div>
+
+
+    {{-- add a fee, or change the quantity / variant of a line (prices from the subscription's price list) --}}
+    <x-rpd::modal name="subscriptionLine" :title="$editingId ? 'Edit item' : 'Add item'" action="saveLine" :actionLabel="$editingId ? 'Save' : 'Add'" width="md">
+        <div class="row g-2">
+            @if($editingId)
+                <div class="col-12 small text-muted">{{ optional($subscription->items->firstWhere('id', $editingId))->name }}</div>
+            @else
+                <x-rpd::select-list col="col-12" model="lineProduct" :options="$lineProducts" label="Product / service" placeholder="Choose…" />
+            @endif
+            @if(count($lineVariants))
+                <x-rpd::select col="col-md-8" model="lineVariant" :options="$lineVariants" label="Variant" addempty />
+            @endif
+            <x-rpd::input col="col-md-4" model="lineQty" type="number" label="Quantity" />
+        </div>
+    </x-rpd::modal>
 </x-rpd::view>

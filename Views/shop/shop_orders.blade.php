@@ -4,9 +4,14 @@
 
         <div class="col-md-4">
 
-            <x-rpd::card title="Order Stats">
-                to-do <br>
-                order stats
+            <x-rpd::card title="Your orders">
+                @php $mine = \App\Modules\Shop\Models\Order::where('user_id', auth()->id()); @endphp
+                <dl class="row mb-0">
+                    <dt class="col-7">Orders</dt><dd class="col-5 text-end">{{ (clone $mine)->count() }}</dd>
+                    <dt class="col-7">Waiting for payment</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['pending_payment', 'payment_verification'])->count() }}</dd>
+                    <dt class="col-7">In progress</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['payment_done', 'in_process', 'shipped'])->count() }}</dd>
+                    <dt class="col-7">Completed</dt><dd class="col-5 text-end">{{ (clone $mine)->where('status', 'completed')->count() }}</dd>
+                </dl>
             </x-rpd::card>
 
         </div>

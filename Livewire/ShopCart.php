@@ -65,7 +65,6 @@ class ShopCart extends Component
 
         $order = OrderService::createOrderFromCart($this->note, auth()->user()->id, null, $this->addressId);
         if ($order) {
-            Cart::destroy();
 
             if (config('shop.checkout_mode', 'immediate') === 'immediate') {
                 $workflow = \Workflow::get($order, 'order');

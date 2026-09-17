@@ -39,6 +39,7 @@ class ProductsEdit extends Component
             'product.sku'         => $uniqueSku,
             'product.category_id' => 'required',
             'product.provisioner' => 'nullable|string',
+            'product.activation'  => 'nullable|in:automatic,manual,customer',
             'image'               => 'nullable|image|max:2048',
         ];
     }
@@ -52,7 +53,7 @@ class ProductsEdit extends Component
     {
         $this->product = $product;
         $this->availableCategories = ProductCategory::getNestedDropdown();
-        $this->types = config('shop.deliverable_types');
+        $this->types = ['inventory_item' => 'Product (stock, serial numbers)', 'service_item' => 'Service (provisioned, licensed)', 'bundle' => 'Bundle (a fee for several services)'];
         $this->provisioners = app(\App\Modules\Shop\Provisioning\Provisioners::class)->options();
     }
 

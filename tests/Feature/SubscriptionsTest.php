@@ -201,4 +201,33 @@ class SubscriptionsTest extends TestCase
         $this->assertSame($first->id, $recorder->findPending($fresh)?->id);
         $this->assertSame($first->id, SubscriptionService::billPeriod($fresh, true)->id, 'billing the same period twice opens one record');
     }
+
+    public function test_a_line_can_change_quantity_and_variant_at_the_current_price_list_prices()
+    {
+        // a variant-priced fee: the warranty, sold monthly for the test (laptop 4.90 / month, printer 1.90 / month)
+        PriceListItem::find(5)->forceFill(['fee_canbe_monthly' => 1, 'fee_monthly' => 4.90])->save();
+        PriceListItem::find(6)->forceFill(['fee_canbe_monthly' => 1, 'fee_monthly' => 1.90])->save();
+        $subscription = SubscriptionService::subscribe($this->user, PriceListItem::find(5), 'monthly');
+        $line = $subscription->items->first();
+        $this->assertSame([4.9, 1, 'SV-WARRANTY-L'], [(float) $line->price, (int) $line->qty, $line->prd_code]);
+
+        SubscriptionService::updateItem($line, 3);
+        $this->assertEqualsWithDelta(4.9 * 3 * 1.22, $subscription->fresh()->total, 0.01, 'quantity');
+
+        SubscriptionService::updateItem($line->fresh(), 2, 4);   // the printer variant
+        $line = $line->fresh();
+        $this->assertSame([1.9, 2, 'SV-WARRANTY-P', 6], [(float) $line->price, (int) $line->qty, $line->prd_code, $line->price_list_item_id]);
+        $this->assertEqualsWithDelta(1.9 * 2 * 1.22, $subscription->fresh()->total, 0.01);
+
+        // the admin page: the modal adds and edits lines
+        $admin = User::create(['name' => 'Root', 'email' => 'root@example.com', 'password' => 'x']);
+        $admin->assignRole('admin');
+        Livewire::actingAs($admin)->test('shop::subscriptions.subscriptions-view', ['subscription' => $subscription->fresh()])
+            ->call('openLine')->set('lineProduct', 5)->set('lineQty', 2)->call('saveLine')
+            ->assertHasNoErrors()
+            ->call('openLine', $line->id)->assertSet('lineQty', 2)->assertSet('lineVariant', 4)
+            ->set('lineQty', 5)->call('saveLine')->assertHasNoErrors();
+        $this->assertSame(5, (int) $line->fresh()->qty);
+        $this->assertCount(2, $subscription->fresh()->items->whereNull('bundle_code'));
+    }
 }

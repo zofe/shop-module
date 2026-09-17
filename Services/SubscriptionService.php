@@ -4,6 +4,7 @@ namespace App\Modules\Shop\Services;
 
 use App\Modules\Shop\Provisioning\ProvisioningService;
 
+use App\Modules\Shop\Models\PriceList;
 use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Subscription;
 use App\Modules\Shop\Models\SubscriptionItem;
@@ -104,6 +105,42 @@ class SubscriptionService
         $subscription->recalculate();
 
         return $line;
+    }
+
+    /**
+     * Change a line: the quantity and/or the variant. The price is read again from the price list
+     * (the row of the same product for the chosen variant, in the subscription's list), so the
+     * line follows the current prices; the components of a bundle follow the quantity.
+     */
+    public static function updateItem(SubscriptionItem $item, int $qty, ?int $variantId = null): SubscriptionItem
+    {
+        $subscription = $item->subscription;
+        $priceItem = $item->priceListItem;
+        if ($priceItem && $variantId !== null && $variantId !== (int) $priceItem->product_variant_id) {
+            $list = $subscription->priceList ?? PriceList::default();
+            $priceItem = $list?->itemFor($priceItem->product_id, $variantId ?: null) ?? $priceItem;
+        }
+        if ($priceItem && ($fee = $priceItem->fee($subscription->period)) !== null) {
+            $item->price_list_item_id = $priceItem->id;
+            $item->product_variant_id = $priceItem->product_variant_id;
+            $item->name = $priceItem->name;
+            $item->prd_code = $priceItem->sku;
+            $item->price = $fee;
+        }
+        $item->qty = max(1, $qty);
+        $item->subtotal = round($item->price * $item->qty, 2);
+        $item->total = round($item->subtotal * (1 + $item->taxRate / 100), 2);
+        $item->save();
+
+        if ($priceItem && $priceItem->product->isBundle()) {
+            foreach ($priceItem->product->bundleItems as $definition) {
+                SubscriptionItem::where('bundle_code', $item->id)->where('prd_code', $definition->sku())
+                    ->update(['qty' => $item->qty * $definition->qty]);
+            }
+        }
+        $subscription->recalculate();
+
+        return $item->fresh();
     }
 
     public static function removeItem(SubscriptionItem $item): void

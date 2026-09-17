@@ -40,8 +40,12 @@ class ProvisioningService
         return $services;
     }
 
-    /** One unit of a service sold by an order: the record, the licence, the `generate` step, the driver. */
-    public static function generateForAssignment(OrderItemAssignment $assignment, bool $provision = true): ServiceItem
+    /**
+     * One unit of a service sold by an order: the record, the licence, the `generate` step; then the
+     * driver (`provision`) right away when the product's activation policy is automatic, otherwise the
+     * item waits in `new` for the operator or for the customer redeeming the key (see activate()).
+     */
+    public static function generateForAssignment(OrderItemAssignment $assignment, ?bool $provision = null): ServiceItem
     {
         return DB::transaction(function () use ($assignment, $provision) {
             $order = $assignment->orderItem->order;
@@ -72,8 +76,39 @@ class ProvisioningService
             $assignment->save();
             self::step($assignment, 'generate', $from);
 
+            $provision ??= $product->activationPolicy() === 'automatic';
+
             return $provision ? self::transition($service, 'provision') : $service;
         });
+    }
+
+    /**
+     * Activate a generated service: the operator (manual policy) or the end user redeeming the licence
+     * key (customer policy). The owner becomes $owner when given (the reseller sold it on).
+     */
+    public static function activate(ServiceItem $service, ?Model $owner = null): ServiceItem
+    {
+        if ($owner) {
+            $service->owner_type = $owner->getMorphClass();
+            $service->owner_id = $owner->getKey();
+            $service->save();
+            if ($license = $service->license) {
+                $license->owner_type = $owner->getMorphClass();
+                $license->owner_id = $owner->getKey();
+                $license->save();
+            }
+        }
+
+        return $service->status === 'new' ? self::transition($service, 'provision') : $service;
+    }
+
+    /** The service item a licence key belongs to, when the key exists and the item is still to activate. */
+    public static function redeemable(string $key): ?ServiceItem
+    {
+        $license = License::where('key', $key)->first();
+        $service = $license && $license->deliverable_type === 'service_item' ? ServiceItem::find($license->deliverable_id) : null;
+
+        return $service && $service->status === 'new' ? $service : null;
     }
 
     /** The order is complete: the assigned inventory items belong to the customer. */
@@ -200,9 +235,10 @@ class ProvisioningService
             'product_id'       => $service->product_id,
             'deliverable_type' => 'service_item',
             'deliverable_id'   => $service->id,
-            'status'           => 'active',
+            'key'              => License::generateKey(),
+            'status'           => 'inactive',   // active once the service is provisioned
             'duration'         => $duration ?? 0,
-            'activation_date'  => now()->toDateString(),
+            'activation_date'  => null,
             'expire_date'      => $expireDate,
             'owner_type'       => $owner?->getMorphClass(),
             'owner_id'         => $owner?->getKey(),

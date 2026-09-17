@@ -14,7 +14,13 @@ class ServiceItemWorkflowSubscriber
 {
     public function onProvision($event)
     {
-        $this->driver($event->getSubject())->provision($event->getSubject());
+        $service = $event->getSubject();
+        $this->driver($service)->provision($service);
+        if ($license = $service->license) {
+            $license->status = 'active';
+            $license->activation_date = $license->activation_date ?? now()->toDateString();
+            $license->save();
+        }
     }
 
     public function onSuspend($event)
