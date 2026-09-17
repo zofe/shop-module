@@ -158,7 +158,7 @@ Route::get('/inventory-items/edit/{item?}', \App\Modules\Shop\Livewire\Items\Inv
     ->middleware(['web'])
     ->name('inventory_items.edit')
     ->crumbs(function ($crumbs, $item=null) {
-        $crumbs->parent('products.table')->push('Edit Inventory Item', route('inventory_items.edit'));
+        $crumbs->parent('inventory_items.table')->push($item ? ($item->serial_number ?: 'Unit ' . $item->shortId) : 'Inventory Item', route('inventory_items.edit', $item));
     });
 
 Route::get('/service-items/table', \App\Modules\Shop\Livewire\Items\ServiceItemsTable::class)
@@ -171,7 +171,7 @@ Route::get('/service-items/edit/{item?}', \App\Modules\Shop\Livewire\Items\Servi
     ->middleware(['web'])
     ->name('service_items.edit')
     ->crumbs(function ($crumbs, $item=null) {
-        $crumbs->parent('products.table')->push('Edit Service Item', route('service_items.edit'));
+        $crumbs->parent('service_items.table')->push($item ? 'Service ' . $item->shortId : 'Service Item', route('service_items.edit', $item));
     });
 
 Route::get('/ajax/available-pricelist-item', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'ajax_available_pricelist_items'])

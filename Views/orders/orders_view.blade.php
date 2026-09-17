@@ -96,9 +96,9 @@
                     <thead>
                     <tr>
                         <th>product/service</th>
-                        <th style="text-transform: none;">key/serial_number</th>
-                        <th>metadata</th>
-                        <th>status</th>
+                        <th style="text-transform: none;">serial number / service</th>
+                        <th>state</th>
+                        <th>delivery</th>
 
                     </tr>
                     </thead>

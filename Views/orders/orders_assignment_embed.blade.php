@@ -2,10 +2,8 @@
     <td class="text-gray-600">
         {{ $assignment->orderItem->name }}
     </td>
-    <td>
-
-    </td>
-    <td>{{ $assignment->metadata }}</td>
+    <td></td>
+    <td></td>
     <td wire:key="wfa_{{$assignment->id}}">
 
         <livewire:workflow::workflow-table-embed

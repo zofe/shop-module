@@ -47,10 +47,16 @@ class ShopSeeder extends Seeder
         }
         // The demo orders belong to the first user (the admin of rpd:make:setup) and their company, when any.
         $user = config('auth.providers.users.model')::query()->orderBy('created_at')->first();
+        $created = [];
         foreach ($data['orders'] as $row) {
+            $order = Order::firstOrNew(['id' => $row['id']]);
+            if ($order->exists) {
+                continue;   // idempotent: an order the demo already moved on is left alone
+            }
             $row['user_id']    = $user?->id;
             $row['company_id'] = $user?->company?->id;
-            Order::firstOrNew(['id' => $row['id']])->fill($row)->save();
+            $order->fill($row)->save();
+            $created[] = $order;
         }
         foreach ($data['order_items'] as $row) {
             $item = OrderItem::firstOrNew([
@@ -59,6 +65,15 @@ class ShopSeeder extends Seeder
             ])->fill($row);
             $item->save();
             \App\Modules\Shop\Services\OrderService::syncAssignments($item);   // one assignment per unit, as the cart does
+        }
+        // The orders leave the cart with pay_order ("Make Order"): through the workflow, so the
+        // listeners run (the payment record is opened when zofe/payments-module is installed).
+        foreach ($created as $order) {
+            $order = $order->fresh();
+            if ($order->workflow_can('pay_order', 'order')) {
+                $order->workflow_apply('pay_order', 'order');
+                $order->save();
+            }
         }
         foreach ($data['inventory_items'] ?? [] as $row) {
             \App\Modules\Shop\Models\InventoryItem::firstOrNew(['id' => $row['id']])->fill($row)->save();

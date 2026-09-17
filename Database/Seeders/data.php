@@ -132,7 +132,8 @@ return [
         ['id' => 'b2d4f6a8-2c3e-4d7f-9a0b-1c2d3e4f5a02', 'product_id' => 2, 'serial_number' => 'PR-24-0002', 'status' => 'in_stock', 'qty' => 1],
     ],
 
-    // Three orders, one per road, all "new": the demo pays them and walks the workflow.
+    // Three orders, one per road. Created "new", then the seeder applies pay_order as "Make Order" does
+    // (the workflow listeners open the payment record): the demo pays them and walks the rest.
     // Fixed uuids so the seeder is idempotent.
     'orders' => [
         [

@@ -11,6 +11,16 @@
 
                     <dt class="col-4">Status</dt>
                     <dd class="col-8"> {{ $order->status }}</dd>
+
+                    @if($order->shipped_at)
+                        <dt class="col-4">Shipped</dt>
+                        <dd class="col-8">
+                            <x-rpd::date-formatted :date="$order->shipped_at"></x-rpd::date-formatted>
+                            @if($order->carrier || $order->tracking_code)
+                                <div class="small text-muted">{{ $order->carrier }} {{ $order->tracking_code }}</div>
+                            @endif
+                        </dd>
+                    @endif
                 </dl>
             </x-rpd::card>
 
@@ -89,20 +99,27 @@
                         <thead>
                         <tr>
                             <th>product/service</th>
-                            <th style="text-transform: none;">key/serial_number</th>
-                            <th>metadata</th>
+                            <th style="text-transform: none;">serial number / licence</th>
                             <th>status</th>
-                            <th></th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach ($order->assignments as $assignment)
+                            @php $service = $assignment->deliverable_type === 'service_item' && $assignment->deliverable_id ? $assignment->deliverable : null; @endphp
                             <tr>
-                                <td>{{ $assignment->deliverable_type }}</td>
-                                <td>{{ $assignment->serial_number }}</td>
-                                <td>{{ $assignment->metadata }}</td>
-                                <td>{{ $assignment->status }}</td>
-                                <td></td>
+                                <td>{{ $assignment->orderItem->name }}</td>
+                                <td class="small">
+                                    @if($assignment->serial_number)
+                                        {{ $assignment->serial_number }}
+                                    @elseif($service && $service->license)
+                                        {{ $service->license->shortId }} · until {{ optional($service->license->expire_date)->format('Y-m-d') ?? 'no expiry' }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $assignment->status === 'generated' ? ($service->status ?? 'generated') : $assignment->status }}
+                                </td>
                             </tr>
                         @endforeach
                         </tbody>
