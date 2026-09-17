@@ -120,6 +120,11 @@ Route::get('/orders/table', \App\Modules\Shop\Livewire\Orders\OrdersTable::class
     ->name('orders.table')
     ->crumbs(fn ($crumbs) => $crumbs->parent('admin.home')->push('Orders', route('orders.table')));
 
+// A document of an order / subscription / service item, produced by the bound DocumentRenderer (a documents module).
+Route::get('/shop-documents/{type}/{id}/{document}', [\App\Modules\Shop\Http\Controllers\ShopController::class, 'document'])
+    ->middleware(['web', 'auth'])
+    ->name('shop.document');
+
 Route::get('/orders/view/{order}', \App\Modules\Shop\Livewire\Orders\OrdersView::class)
     ->middleware(['web'])
     ->name('orders.view')

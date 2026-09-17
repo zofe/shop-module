@@ -27,6 +27,7 @@ antivirus, a bundle) are subscribed from the storefront.
 | [docs/SUBSCRIPTIONS.md](docs/SUBSCRIPTIONS.md) | the subscription flow, billing, lines, the services of a subscription |
 | [docs/PROVISIONING.md](docs/PROVISIONING.md) | provisioning drivers, the `service_item` workflow, activation policies, licences, stock |
 | [docs/PAYMENTS.md](docs/PAYMENTS.md) | payment methods, `zofe/payments-module`, taxes (flat, EU VAT + VIES, gateway tax) |
+| [docs/DOCUMENTS.md](docs/DOCUMENTS.md) | order confirmations, delivery notes, statements, certificates: the `DocumentRenderer` contract |
 
 ## In short
 
@@ -40,6 +41,8 @@ antivirus, a bundle) are subscribed from the storefront.
   workflow; activation automatic, manual or by the customer with a licence key.
 - **Payments**: a `PaymentMethod` contract with a manual method built in; `zofe/payments-module` adds Stripe, Paddle,
   GoCardless. Taxes estimated from the billing address (EU VAT with VIES), final from the gateway.
+- **Documents**: a `DocumentRenderer` contract; the shop defines confirmations, delivery notes, statements and
+  certificates, a documents module produces them (PDF, Excel).
 
 ## Tests
 

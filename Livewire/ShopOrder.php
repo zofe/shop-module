@@ -18,6 +18,10 @@ class ShopOrder extends Component
     public function booted()
     {
         $this->authorize('admin|edit own orders|view own orders');
+        // own orders only: the customer, or their company
+        $user = auth()->user();
+        $mine = $this->order->user_id === $user->id || ($this->order->company_id && $this->order->company_id === ($user->company_id ?? null));
+        abort_unless($mine || $user->hasRoleOrPermission('admin|view orders'), 403);
     }
 
     public function mount(Order $order)

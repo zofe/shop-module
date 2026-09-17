@@ -115,6 +115,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Documents
+    |--------------------------------------------------------------------------
+    |
+    | The documents the shop can hand out, by subject (the morph alias of the model):
+    | a label and, optionally, the states of the subject they make sense in. The shop
+    | shows a button for each one the bound DocumentRenderer supports
+    | (App\Modules\Shop\Documents\Contracts\DocumentRenderer). No renderer is bound by
+    | default: a documents module registers one (PDF, Excel…) with its templates.
+    |
+    */
+    'documents' => [
+        'order' => [
+            'order_confirmation' => ['label' => 'Order confirmation', 'states' => ['payment_done', 'in_process', 'shipped', 'completed']],
+            'delivery_note'      => ['label' => 'Delivery note',      'states' => ['shipped', 'completed']],
+        ],
+        'subscription' => [
+            'subscription_statement' => ['label' => 'Statement'],
+        ],
+        'service_item' => [
+            'license_certificate' => ['label' => 'Licence certificate', 'states' => ['active']],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Provisioning
     |--------------------------------------------------------------------------
     |

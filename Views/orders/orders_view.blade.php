@@ -3,9 +3,6 @@
     <div class="row">
         <div class="col-md-8">
             <x-rpd::card title="Order Detail">
-{{--                <x-slot name="buttons">--}}
-{{--                    <x-rpd::button label="Add Product/Service" color="outline-primary" target="addItem" size="sm" class="m-1" />--}}
-{{--                </x-slot>--}}
 
                 <livewire:shop::orders.orders-modal-edit-embed
                     :order="$order->id"
@@ -124,6 +121,12 @@
 
                     <dt class="col-4">Status</dt>
                     <dd class="col-8">{{ $order->status }}</dd>
+
+                    @php $docs = app(\App\Modules\Shop\Documents\Documents::class)->available($order); @endphp
+                    @if($docs)
+                        <dt class="col-4">Documents</dt>
+                        <dd class="col-8">@include('shop::includes.documents', ['subject' => $order])</dd>
+                    @endif
 
                     @if($order->shipped_at)
                         <dt class="col-4">Shipped</dt>

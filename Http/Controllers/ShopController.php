@@ -3,7 +3,7 @@
 
 namespace App\Modules\Shop\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use App\Modules\Shop\Models\InventoryItem;
 use App\Modules\Shop\Models\PriceListItem;
 
@@ -28,6 +28,24 @@ class ShopController extends Controller
         });
 
         return response()->json($prices);
+    }
+
+    /** A document for a subject: the owner of the subject, or the back office. */
+    public function document(string $type, string $id, string $document)
+    {
+        $model = \Illuminate\Database\Eloquent\Relations\Relation::getMorphedModel($type);
+        abort_unless($model && in_array($type, ['order', 'subscription', 'service_item'], true), 404);
+        $subject = $model::findOrFail($id);
+        $user = auth()->user();
+        $owns = ($subject->user_id ?? null) === $user->id
+            || (($subject->owner_type ?? null) === 'user' && ($subject->owner_id ?? null) === $user->id)
+            || (($subject->company_id ?? $subject->owner_id ?? null) && ($user->company_id ?? null) && ($subject->company_id ?? $subject->owner_id) === $user->company_id);
+        abort_unless($owns || $user->hasRoleOrPermission('admin|view orders|view subscriptions|view service items'), 403);
+
+        $documents = app(\App\Modules\Shop\Documents\Documents::class);
+        abort_unless(isset($documents->available($subject)[$document]), 404);
+
+        return $documents->renderer()->render($document, $subject);
     }
 
     public function ajax_available_inventory_items()

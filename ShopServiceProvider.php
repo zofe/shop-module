@@ -82,6 +82,12 @@ class ShopServiceProvider extends RapydModuleServiceProvider
         ], true);
 
         $this->app->singleton(\App\Modules\Shop\Provisioning\Provisioners::class);
+        $this->app->singleton(\App\Modules\Shop\Documents\Documents::class, function ($app) {
+            $renderer = $app->bound(\App\Modules\Shop\Documents\Contracts\DocumentRenderer::class)
+                ? $app->make(\App\Modules\Shop\Documents\Contracts\DocumentRenderer::class) : null;
+
+            return new \App\Modules\Shop\Documents\Documents($renderer);
+        });
     }
 
     /** The permissions of the shop join those of rapyd-admin (config auth.*), role by role. */

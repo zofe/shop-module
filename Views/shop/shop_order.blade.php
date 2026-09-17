@@ -45,6 +45,9 @@
             @else
 
                 <x-rpd::card title="Order Detail">
+                    <x-slot name="buttons">
+                        @include('shop::includes.documents', ['subject' => $order])
+                    </x-slot>
                     <table class="table">
                         <thead>
                         <tr>

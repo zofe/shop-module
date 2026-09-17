@@ -5,6 +5,7 @@
     <div class="col-md-8">
         <x-rpd::card title="Service item {{ $item->shortId }}">
             <x-slot name="buttons">
+                @include('shop::includes.documents', ['subject' => $item])
                 <x-rpd::button label="Back" route="service_items.table" color="outline-dark" />
             </x-slot>
 

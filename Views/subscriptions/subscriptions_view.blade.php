@@ -1,5 +1,6 @@
 <x-rpd::view title="Subscription {{ $subscription->shortId }}">
     <x-slot name="buttons">
+        @include('shop::includes.documents', ['subject' => $subscription])
         <a href="{{ route('subscriptions.table') }}" class="btn btn-outline-primary">List</a>
     </x-slot>
 

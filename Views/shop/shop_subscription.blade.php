@@ -48,6 +48,9 @@
             @endif
 
             <x-rpd::card title="Subscription items">
+                <x-slot name="buttons">
+                    @include('shop::includes.documents', ['subject' => $subscription])
+                </x-slot>
                 <table class="table table-sm">
                     <thead><tr><th>SKU</th><th>Description</th><th class="text-end">Qty</th><th class="text-end">Fee</th></tr></thead>
                     <tbody>
