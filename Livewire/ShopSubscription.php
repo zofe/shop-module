@@ -2,9 +2,7 @@
 
 namespace App\Modules\Shop\Livewire;
 
-use App\Modules\Shop\Models\PriceListItem;
 use App\Modules\Shop\Models\Subscription;
-use App\Modules\Shop\Models\SubscriptionItem;
 use App\Modules\Shop\Payments\Contracts\PaymentRecorder;
 use App\Modules\Shop\Payments\PaymentMethods;
 use App\Modules\Shop\Services\SubscriptionService;
@@ -16,8 +14,6 @@ use Livewire\Component;
 class ShopSubscription extends Component
 {
     public Subscription $subscription;
-
-    public ?int $newItem = null;
 
     public function booted(): void
     {
@@ -65,37 +61,12 @@ class ShopSubscription extends Component
         session()->flash('checkout_message', $start->message);
     }
 
-    public function addItem(): void
-    {
-        $item = $this->newItem ? PriceListItem::find($this->newItem) : null;
-        if ($item && $item->fee($this->subscription->period) && $this->subscription->isActive()) {
-            SubscriptionService::addItem($this->subscription, $item);
-            $this->newItem = null;
-            $this->subscription->refresh();
-            session()->flash('success', 'Added to the subscription from the next period');
-        }
-    }
-
-    public function removeItem(int $itemId): void
-    {
-        $line = SubscriptionItem::where('subscription_id', $this->subscription->id)->find($itemId);
-        if ($line && ! $line->bundle_code) {
-            SubscriptionService::removeItem($line);
-            $this->subscription->refresh();
-        }
-    }
-
     public function render()
     {
         $this->subscription->load('items');
         $recorder = app(PaymentRecorder::class);
         $this->subscription->firstPeriod = $this->subscription->status === 'pending';   // the activation is part of the first period
         $pending = $recorder->findPending($this->subscription);
-        $list = \App\Modules\Shop\Models\PriceList::forCustomer(auth()->user());
-        $addable = $list ? $list->items()->with('product')->get()->filter(fn ($i) => $i->fee($this->subscription->period))
-            ->reject(fn ($i) => $this->subscription->items->contains('price_list_item_id', $i->id))
-            ->mapWithKeys(fn ($i) => [$i->id => $i->name . ' — ' . number_format($i->fee($this->subscription->period), 2) . ' ' . \App\Modules\Shop\CartFacade::currency()])
-            ->all() : [];
 
         return view('shop::shop.shop_subscription', [
             'subscription' => $this->subscription,
@@ -103,7 +74,6 @@ class ShopSubscription extends Component
             'payments'     => $recorder->history($this->subscription),
             'hasRecorder'  => $recorder->available(),
             'methods'      => $pending || ! $recorder->available() ? app(PaymentMethods::class)->for($this->subscription) : collect(),
-            'addable'      => $addable,
         ])->layout('shop::frontend');
     }
 }

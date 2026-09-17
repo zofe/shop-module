@@ -11,9 +11,6 @@
                     <dt class="col-5">Fee</dt><dd class="col-7">{{ number_format($subscription->total, 2) }} {{ Cart::currency() }} / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</dd>
                 </dl>
             </x-rpd::card>
-            <x-rpd::card title="Billing address">
-                @include('shop::includes.addresses')
-            </x-rpd::card>
         </div>
 
         <div class="col-md-8">
@@ -52,7 +49,7 @@
 
             <x-rpd::card title="Subscription items">
                 <table class="table table-sm">
-                    <thead><tr><th>SKU</th><th>Description</th><th class="text-end">Qty</th><th class="text-end">Fee</th><th></th></tr></thead>
+                    <thead><tr><th>SKU</th><th>Description</th><th class="text-end">Qty</th><th class="text-end">Fee</th></tr></thead>
                     <tbody>
                     @foreach($subscription->items as $item)
                         <tr wire:key="si-{{ $item->id }}" class="{{ $item->bundle_code ? 'text-muted small' : '' }}">
@@ -60,24 +57,13 @@
                             <td>{{ $item->bundle_code ? '↳ ' : '' }}{{ $item->name }}</td>
                             <td class="text-end">{{ $item->qty }}</td>
                             <td class="text-end">{{ number_format($item->subtotal, 2) }} {{ Cart::currency() }}</td>
-                            <td class="text-end">
-                                @if(! $item->bundle_code && $subscription->items->where('bundle_code', 0)->count() > 1)
-                                    <x-rpd::icon name="trash-alt" click="removeItem({{ $item->id }})" confirm="Remove {{ $item->name }} from the next period?" />
-                                @endif
-                            </td>
                         </tr>
                     @endforeach
                     </tbody>
                     <tfoot>
-                    <tr><td colspan="3" class="text-end"><strong>Total / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td><td></td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Total / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td></tr>
                     </tfoot>
                 </table>
-                @if($subscription->isActive() && count($addable))
-                    <div class="d-flex gap-2 align-items-end">
-                        <x-rpd::select-list col="col-md-8" model="newItem" :options="$addable" placeholder="Add a service…" label="Add to the subscription" />
-                        <div class="col-md-4 pb-3"><x-rpd::button size="sm" color="outline-primary" label="Add" icon="plus" click="addItem" /></div>
-                    </div>
-                @endif
             </x-rpd::card>
 
             @if($hasRecorder)

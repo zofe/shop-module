@@ -4,9 +4,10 @@
 
 A separate flow, no cart: "Subscribe monthly / yearly" on a product sold as a fee creates the **Subscription** with its
 **SubscriptionItems** (the fees; a bundle unfolds its components) and the **first pending payment** (fee plus
-activation), or a trial that is billed at its end. The customer's page (`/shop-subscription/{id}`) shows items, billing
-address, the payment due with the payment methods, and lets them add or remove fees; the admin page adds "mark paid",
-"failed", "bill now" and the workflow transitions (`activate`, `past_due`, `cancel`).
+activation), or a trial that is billed at its end. The customer's page (`/shop-subscription/{id}`) shows the lines, the
+payment due with the payment methods and the payment history: the lines are changed by the operator only (the admin
+page), where "mark paid", "failed", "bill now", "Add item" and the workflow transitions (`activate`, `past_due`,
+`cancel`) live. The billing data come from the customer's company and addresses, nothing is chosen per subscription.
 
 Every period `php artisan shop:bill-subscriptions` (schedule it daily) creates the next pending payment; a confirmed
 payment extends `next_billing_at`, a pending one older than `SHOP_SUBSCRIPTION_GRACE_DAYS` (7) marks the subscription
