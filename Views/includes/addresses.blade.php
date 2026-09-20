@@ -5,7 +5,7 @@
     @endphp
 
     <div class="d-flex justify-content-between align-items-center mb-1">
-        <span class="small">Shipping Addresses</span>
+        <span class="small">{{ __('Shipping Addresses') }}</span>
         <livewire:addresses::addresses-button-add-embed
             :addressableType="$addressable->getMorphClass()"
             :addressableId="$addressable->id"

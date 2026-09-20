@@ -14,12 +14,12 @@
 
                     <div class="text-center py-5 text-warning">
 
-                        please
+                        {{ __('please') }}
 
-                        <a class="text-warning" href="{{ route('login') }}">log in</a>
+                        <a class="text-warning" href="{{ route_lang('login') }}">{{ __('log in') }}</a>
 
                         @if (Route::has('register'))
-                            <a class="nav-link" href="{{ route('register') }}">register an account</a>
+                            <a class="nav-link" href="{{ route_lang('register') }}">{{ __('register an account') }}</a>
                         @endif
 
                         to proceed
@@ -55,12 +55,12 @@
                         <thead>
                         <tr>
                             <th></th>
-                            <th>SKU</th>
-                            <th>Description</th>
-                            <th class="text-end">Price</th>
-                            <th class="text-end">Quantity</th>
-                            <th class="text-center">Change</th>
-                            <th class="text-end">Subtotal</th>
+                            <th>{{ __('SKU') }}</th>
+                            <th>{{ __('Description') }}</th>
+                            <th class="text-end">{{ __('Price') }}</th>
+                            <th class="text-end">{{ __('Quantity') }}</th>
+                            <th class="text-center">{{ __('Change') }}</th>
+                            <th class="text-end">{{ __('Subtotal') }}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -82,7 +82,7 @@
                                     <input wire:change="updateItem('{{$item->rowId}}', $event.target.value)"
                                            type="number"  min="1" max="50" value="{{ $item->qty }}" class="form-control rounded-end">
 
-                                    <a wire:click.prevent="removeItem('{{$item->rowId}}')" href="#">remove</a>
+                                    <a wire:click.prevent="removeItem('{{$item->rowId}}')" href="#">{{ __('remove') }}</a>
                                 </td>
                                 <td class="text-end">{{ $item->subtotal() }}  {{ Cart::currency() }}</td>
                             </tr>
@@ -92,22 +92,22 @@
                         <tfoot>
                         <tr class="tr-small">
                             <td colspan="5">&nbsp;</td>
-                            <td class="text-end">Subtotal</td>
+                            <td class="text-end">{{ __('Subtotal') }}</td>
                             <td class="text-end">{{ Cart::subtotal() }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr class="tr-small">
                             <td colspan="5">&nbsp;</td>
-                            <td class="text-end">Shipping</td>
+                            <td class="text-end">{{ __('Shipping') }}</td>
                             <td class="text-end shipping">{{ Cart::shipping() }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr>
                             <td colspan="5">&nbsp;</td>
-                            <td class="text-end">Tax <small class="text-muted" title="{{ $estimate->reason }}">(estimated, {{ $estimate->rate + 0 }}%)</small></td>
+                            <td class="text-end">{{ __('Tax') }} <small class="text-muted" title="{{ $estimate->reason }}">({{ __('estimated') }}, {{ $estimate->rate + 0 }}%)</small></td>
                             <td class="text-end tax">{{ Cart::tax() }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr>
                             <td colspan="5">&nbsp;</td>
-                            <td class="text-end h5"><strong>Total</strong></td>
+                            <td class="text-end h5"><strong>{{ __('Total') }}</strong></td>
                             <td class="text-end h5 total"><strong>{{ Cart::total() }} {{ Cart::currency() }}</strong></td>
                         </tr>
                         </tfoot>
@@ -124,11 +124,11 @@
                     @endif
                     @if($requiresShipping && ! $addressId)
                         <div class="text-center text-muted small my-2">
-                            <i class="fas fa-truck me-1"></i> This order contains physical goods: add and choose a shipping address to continue.
+                            <i class="fas fa-truck me-1"></i> {{ __('This order contains physical goods: add and choose a shipping address to continue.') }}
                         </div>
                     @else
                         <div class="text-center">
-                            <a class="btn btn-primary my-2" wire:click.prevent="makeOrder">Make Order</a>
+                            <a class="btn btn-primary my-2" wire:click.prevent="makeOrder">{{ __('Make Order') }}</a>
                         </div>
                     @endif
                 @endif

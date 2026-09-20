@@ -16,13 +16,11 @@
         <table class="table">
             <thead>
             <tr>
-                <th>
-                    id
-                </th>
-                <th>products</th>
-                <th>status</th>
-                <th>customer</th>
-                <th>subtotal</th>
+                <th>{{ __('Id') }}</th>
+                <th>{{ __('products') }}</th>
+                <th>{{ __('status') }}</th>
+                <th>{{ __('customer') }}</th>
+                <th>{{ __('subtotal') }}</th>
                 <th><x-rpd::sort model="created_at" label="created_at" /></th>
                 <th><x-rpd::sort model="updated_at" label="updated_at" /></th>
             </tr>

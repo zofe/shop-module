@@ -18,7 +18,7 @@
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-3">
             <span class="badge bg-secondary">{{ str_replace('_', ' ', $price->product->type) }}</span>
-            @if($price->product->sku)<span class="text-muted small">SKU {{ $price->product->sku }}</span>@endif
+            @if($price->product->sku)<span class="text-muted small">{{ __('SKU') }} {{ $price->product->sku }}</span>@endif
             @if($price->product->category)<span class="text-muted small">· {{ $price->product->category->name }}</span>@endif
         </div>
 
@@ -42,7 +42,7 @@
             @if($price->isPurchasable())
                 <div class="d-flex align-items-baseline gap-2">
                     <span class="fs-2 fw-bold">{{ number_format($price->price_onetime, 2) }} {{ Cart::currency() }}</span>
-                    <span class="text-muted">one-time</span>
+                    <span class="text-muted">{{ __('one-time') }}</span>
                 </div>
             @endif
             @foreach($fees as $period => $fee)
@@ -52,15 +52,15 @@
                 </div>
             @endforeach
             @if($price->activationPrice())
-                <div class="small text-muted mt-1">+ {{ number_format($price->activationPrice(), 2) }} {{ Cart::currency() }} activation, once</div>
+                <div class="small text-muted mt-1">+ {{ number_format($price->activationPrice(), 2) }} {{ Cart::currency() }} {{ __('activation, once') }}</div>
             @endif
             @if($price->trial_days && $fees)
-                <div class="small text-success mt-1"><i class="fas fa-gift me-1"></i>{{ $price->trial_days }} days free trial</div>
+                <div class="small text-success mt-1"><i class="fas fa-gift me-1"></i>{{ $price->trial_days }} {{ __('days free trial') }}</div>
             @endif
             @if(! $price->isPurchasable() && ! $fees)
-                <div class="fs-5 text-muted">Contact us for a quote</div>
+                <div class="fs-5 text-muted">{{ __('Contact us for a quote') }}</div>
             @endif
-            <div class="small text-muted mt-1">Taxes estimated from your billing address.</div>
+            <div class="small text-muted mt-1">{{ __('Taxes estimated from your billing address.') }}</div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
                 @if($price->isPurchasable())
@@ -71,7 +71,7 @@
                                    :color="$loop->first && ! $price->isPurchasable() ? 'primary' : 'outline-primary'" click="subscribe('{{ $period }}')" />
                 @endforeach
                 @if(Cart::count() > 0)
-                    <a href="{{ route('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> Go to cart ({{ Cart::count() }})</a>
+                    <a href="{{ route_lang('shop.cart') }}" class="btn btn-outline-secondary"><i class="fas fa-shopping-cart me-1"></i> {{ __('Go to cart') }} ({{ Cart::count() }})</a>
                 @endif
             </div>
         </div>
@@ -85,9 +85,9 @@
         @endif
 
         @if($price->product->type === 'inventory_item')
-            <div class="small text-muted"><i class="fas fa-truck me-1"></i> Physical item: shipped to the address you choose at checkout.</div>
+            <div class="small text-muted"><i class="fas fa-truck me-1"></i> {{ __('Physical item: shipped to the address you choose at checkout.') }}</div>
         @else
-            <div class="small text-muted"><i class="fas fa-bolt me-1"></i> Delivered online, no shipping.</div>
+            <div class="small text-muted"><i class="fas fa-bolt me-1"></i> {{ __('Delivered online, no shipping.') }}</div>
         @endif
     </div>
 

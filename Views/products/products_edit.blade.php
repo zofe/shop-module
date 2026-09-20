@@ -18,7 +18,7 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
             <div class="row">
                 <x-rpd::select col="col-md-4" model="product.provisioner" label="Provisioning driver" :options="$provisioners" addempty />
                 <x-rpd::select col="col-md-4" model="product.activation" label="Activation" :options="['automatic' => 'Automatic (at payment)', 'manual' => 'Manual (by the operator)', 'customer' => 'By the customer (licence key)']" addempty />
-                <div class="col-md-4 small text-muted align-self-end pb-2">Empty = the shop's defaults (<code>shop.provisioning</code>). "By the customer" fits B2B: sold to a reseller, activated by the end user with the key.</div>
+                <div class="col-md-4 small text-muted align-self-end pb-2">{{ __('Empty = the shop\'s defaults') }} (<code>shop.provisioning</code>). {{ __('"By the customer" fits B2B: sold to a reseller, activated by the end user with the key.') }}</div>
             </div>
         @endif
 
@@ -29,7 +29,7 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
 
         <div class="row mt-3">
             <div class="col-md-6">
-                <label class="form-label">Image</label>
+                <label class="form-label">{{ __('Image') }}</label>
                 <x-rpd::upload model="image" col="" />
 
                 @if($image)
@@ -40,7 +40,7 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
                     <div class="mt-2 d-flex align-items-center gap-3">
                         <img src="{{ Storage::url($product->image_path) }}" class="img-thumbnail" style="max-height:160px;" alt="{{ $product->name }}">
                         <button type="button" wire:click="removeImage" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i> Remove
+                            <i class="fas fa-trash"></i> {{ __('Remove') }}
                         </button>
                     </div>
                 @endif
@@ -48,7 +48,7 @@ $title = $product->exists ? 'Update Product/Service' : 'Create Product/Service';
         </div>
 
         <x-slot name="actions">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
         </x-slot>
 
     </x-rpd::edit>

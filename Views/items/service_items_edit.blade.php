@@ -10,13 +10,13 @@
             </x-slot>
 
             <dl class="row mb-0">
-                <dt class="col-4">Service</dt>
+                <dt class="col-4">{{ __('Service') }}</dt>
                 <dd class="col-8">{{ optional($item->product)->name }}</dd>
 
-                <dt class="col-4">Owner</dt>
+                <dt class="col-4">{{ __('Owner') }}</dt>
                 <dd class="col-8">{{ optional($item->owner)->business_name ?? optional($item->owner)->name ?? '—' }}</dd>
 
-                <dt class="col-4">Sold by</dt>
+                <dt class="col-4">{{ __('Sold by') }}</dt>
                 <dd class="col-8">
                     @if($soldBy instanceof \App\Modules\Shop\Models\Order)
                         <x-rpd::nav-link icon="file-invoice" :label="'Order ' . $soldBy->shortId" route="orders.view" :params="$soldBy->id" />
@@ -27,10 +27,10 @@
                     @endif
                 </dd>
 
-                <dt class="col-4">Driver</dt>
-                <dd class="col-8">{{ $item->provisionerName() }} @if($item->external_ref)<span class="text-muted small">ref. {{ $item->external_ref }}</span>@endif</dd>
+                <dt class="col-4">{{ __('Driver') }}</dt>
+                <dd class="col-8">{{ $item->provisionerName() }} @if($item->external_ref)<span class="text-muted small">{{ __('ref.') }} {{ $item->external_ref }}</span>@endif</dd>
 
-                <dt class="col-4">Licence</dt>
+                <dt class="col-4">{{ __('Licence') }}</dt>
                 <dd class="col-8">
                     @if($item->license)
                         {{ $item->license->shortId }} · {{ $item->license->status }} ·
@@ -43,11 +43,11 @@
                     @endif
                 </dd>
 
-                <dt class="col-4">Activation</dt>
+                <dt class="col-4">{{ __('Activation') }}</dt>
                 <dd class="col-8">{{ optional($item->product)->activationPolicy() ?? '—' }}</dd>
 
                 @if($item->metadata)
-                    <dt class="col-4">Driver data</dt>
+                    <dt class="col-4">{{ __('Driver data') }}</dt>
                     <dd class="col-8"><pre class="small mb-0">{{ json_encode($item->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre></dd>
                 @endif
             </dl>
@@ -56,7 +56,7 @@
     <div class="col-md-4">
         <x-rpd::card title="Status">
             <dl class="row">
-                <dt class="col-4">Status</dt>
+                <dt class="col-4">{{ __('Status') }}</dt>
                 <dd class="col-8">{{ $item->status }}</dd>
             </dl>
             @if($item->exists)

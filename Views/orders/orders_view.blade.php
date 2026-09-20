@@ -15,12 +15,12 @@
                 <table class="table">
                     <thead>
                     <tr>
-                        <th>SKU</th>
-                        <th>Description</th>
-                        <th class="text-end">Price</th>
-                        <th class="text-end">Quantity</th>
+                        <th>{{ __('SKU') }}</th>
+                        <th>{{ __('Description') }}</th>
+                        <th class="text-end">{{ __('Price') }}</th>
+                        <th class="text-end">{{ __('Quantity') }}</th>
                         <th></th>
-                        <th class="text-end">Subtotal</th>
+                        <th class="text-end">{{ __('Subtotal') }}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -39,12 +39,12 @@
                     <tfoot>
                     <tr class="tr-small">
                         <td colspan="4">&nbsp;</td>
-                        <td class="text-end">Subtotal</td>
+                        <td class="text-end">{{ __('Subtotal') }}</td>
                         <td class="text-end">{{ $order->subtotal }} {{ Cart::currency() }}</td>
                     </tr>
                     <tr class="tr-small">
                         <td colspan="4">&nbsp;</td>
-                        <td class="text-end">Shipping</td>
+                        <td class="text-end">{{ __('Shipping') }}</td>
                         <td class="text-end shipping">{{ $order->shipping }} {{ Cart::currency() }}</td>
                     </tr>
                     <tr>
@@ -54,7 +54,7 @@
                     </tr>
                     <tr>
                         <td colspan="4">&nbsp;</td>
-                        <td class="text-end h5"><strong>Total</strong></td>
+                        <td class="text-end h5"><strong>{{ __('Total') }}</strong></td>
                         <td class="text-end h5 total"><strong>{{ $order->total }} {{ Cart::currency() }}</strong></td>
                     </tr>
                     </tfoot>
@@ -92,10 +92,10 @@
                 <table class="table">
                     <thead>
                     <tr>
-                        <th>product/service</th>
-                        <th style="text-transform: none;">serial number / service</th>
-                        <th>state</th>
-                        <th>delivery</th>
+                        <th>{{ __('product/service') }}</th>
+                        <th style="text-transform: none;">{{ __('serial number / service') }}</th>
+                        <th>{{ __('state') }}</th>
+                        <th>{{ __('delivery') }}</th>
 
                     </tr>
                     </thead>
@@ -116,20 +116,20 @@
         <div class="col-md-4">
             <x-rpd::card title="Status">
                 <dl class="row">
-                    <dt class="col-4">Created at</dt>
+                    <dt class="col-4">{{ __('Created at') }}</dt>
                     <dd class="col-8"><x-rpd::date-formatted :date="$order->created_at"></x-rpd::date-formatted></dd>
 
-                    <dt class="col-4">Status</dt>
+                    <dt class="col-4">{{ __('Status') }}</dt>
                     <dd class="col-8">{{ $order->status }}</dd>
 
                     @php $docs = app(\App\Modules\Shop\Documents\Documents::class)->available($order); @endphp
                     @if($docs)
-                        <dt class="col-4">Documents</dt>
+                        <dt class="col-4">{{ __('Documents') }}</dt>
                         <dd class="col-8">@include('shop::includes.documents', ['subject' => $order])</dd>
                     @endif
 
                     @if($order->shipped_at)
-                        <dt class="col-4">Shipped</dt>
+                        <dt class="col-4">{{ __('Shipped') }}</dt>
                         <dd class="col-8">
                             <x-rpd::date-formatted :date="$order->shipped_at"></x-rpd::date-formatted>
                             @if($order->carrier || $order->tracking_code || $order->shipping_document)
@@ -140,9 +140,9 @@
 
                     @php $payment = class_exists(\App\Modules\Payments\Models\Payment::class) ? \App\Modules\Payments\Models\Payment::where('order_id', $order->id)->latest()->first() : null; @endphp
                     @if($payment)
-                        <dt class="col-4">Payment</dt>
+                        <dt class="col-4">{{ __('Payment') }}</dt>
                         <dd class="col-8">
-                            <a href="{{ route('payments.view', $payment) }}" class="small">
+                            <a href="{{ route_lang('payments.view', $payment) }}" class="small">
                                 <span class="badge bg-{{ match($payment->status) {
                                     'confirmed' => 'success',
                                     'failed','cancelled' => 'danger',
@@ -166,19 +166,19 @@
             <x-rpd::card title="Customer">
                 <dl class="row">
                     @if($order->company)
-                        <dt class="col-4">Company</dt>
+                        <dt class="col-4">{{ __('Company') }}</dt>
                         <dd class="col-8">
                             {{ $order->company->business_name }}
                             <x-rpd::nav-link icon="address-card" :label="$order->company->business_name" route="companies.view" :params="$order->company_id" />
                         </dd>
                     @endif
                     @if($order->user)
-                        <dt class="col-4">User</dt>
+                        <dt class="col-4">{{ __('User') }}</dt>
                         <dd class="col-8">
                             <x-rpd::nav-link icon="user" :label="$order->user->name" name="edit" route="auth.users.view" :params="$order->user_id" />
                             @canImpersonate
                             @if($order->user->canBeImpersonated())
-                                <a href="{{ route('orders.impersonate-owner', $order) }}" class="btn btn-xsm btn-link text-muted ms-1" title="View order as this customer">
+                                <a href="{{ route_lang('orders.impersonate-owner', $order) }}" class="btn btn-xsm btn-link text-muted ms-1" title="View order as this customer">
                                     <i class="fas fa-user-secret"></i>
                                 </a>
                             @endif
@@ -187,7 +187,7 @@
                     @endif
 
                     @if($order->shipping_address)
-                        <dt class="col-4">Shipping</dt>
+                        <dt class="col-4">{{ __('Shipping') }}</dt>
                         <dd class="col-8">
                             @include('shop::includes.address_lines', ['address' => $order->shipping_address])
                         </dd>

@@ -1,7 +1,7 @@
 <div class="col-12 col-sm-6 col-md-6 mb-3">
     <div class="card h-100 shadow-sm">
         @if($price->product->image_path)
-            <a href="{{ route('shop.list', $price->product->full_path) }}">
+            <a href="{{ route_lang('shop.list', $price->product->full_path) }}">
                 <img src="{{ Storage::url($price->product->thumb_path) }}"
                      class="card-img-top"
                      style="height:180px; object-fit:cover;"
@@ -17,13 +17,13 @@
                 @if($price->isPurchasable())
                     <span class="fw-bold">{{ number_format($price->price_onetime, 2) }} {{ Cart::currency() }}</span>
                 @elseif($fee = $price->fee('monthly'))
-                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">/mo</small></span>
+                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">{{ __('/mo') }}</small></span>
                 @elseif($fee = $price->fee('yearly'))
-                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">/yr</small></span>
+                    <span class="fw-bold">{{ number_format($fee, 2) }} {{ Cart::currency() }}<small class="text-muted fw-normal">{{ __('/yr') }}</small></span>
                 @else
-                    <span class="text-muted small">Contact us</span>
+                    <span class="text-muted small">{{ __('Contact us') }}</span>
                 @endif
-                <a href="{{ route('shop.list', $price->product->full_path) }}" class="btn btn-outline-primary btn-sm">View</a>
+                <a href="{{ route_lang('shop.list', $price->product->full_path) }}" class="btn btn-outline-primary btn-sm">{{ __('View') }}</a>
             </div>
         </div>
     </div>

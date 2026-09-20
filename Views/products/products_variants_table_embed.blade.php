@@ -11,9 +11,9 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>name</th>
-                    <th>meta</th>
-                    <th>sku</th>
+                    <th>{{ __('name') }}</th>
+                    <th>{{ __('meta') }}</th>
+                    <th>{{ __('sku') }}</th>
                     <th></th>
                 </tr>
             </thead>

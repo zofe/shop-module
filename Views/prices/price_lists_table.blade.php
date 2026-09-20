@@ -23,8 +23,8 @@
                 <th>
                     <x-rpd::sort model="name" label="name" />
                 </th>
-                <th>active</th>
-                <th>default</th>
+                <th>{{ __('active') }}</th>
+                <th>{{ __('default') }}</th>
             </tr>
             </thead>
             <tbody>

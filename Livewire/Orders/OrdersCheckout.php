@@ -26,7 +26,7 @@ class OrdersCheckout extends Component
         $this->order = $order;
 
         if ($order->status !== 'pending_payment') {
-            $this->redirect(route('orders.view', $order));
+            $this->redirect(route_lang('orders.view', $order));
         }
     }
 

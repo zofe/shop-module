@@ -6,7 +6,7 @@
         @if($service = $assignment->deliverable)
             <x-rpd::nav-link icon="concierge-bell" :label="'Service ' . $service->shortId" route="service_items.edit" :params="$service->id" />
             @if($service->license)
-                <div class="text-muted">licence {{ $service->license->shortId }} · until {{ optional($service->license->expire_date)->format('Y-m-d') ?? 'no expiry' }}</div>
+                <div class="text-muted">{{ __('licence') }} {{ $service->license->shortId }} · {{ __('until') }} {{ optional($service->license->expire_date)->format('Y-m-d') ?? __('no expiry') }}</div>
             @endif
         @endif
     </td>

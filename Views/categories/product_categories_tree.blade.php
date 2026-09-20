@@ -15,7 +15,7 @@
         >
             <div wire:key="add_in_{{$newcategory->parent_id}}">
                 @if($newcategory->parent_id)
-                    <h5>as subcategory of {{ $newcategory->parent_id }}</h5>
+                    <h5>{{ __('as subcategory of') }} {{ $newcategory->parent_id }}</h5>
                 @endif
                 <x-rpd::input col="col-md-12" model="newcategory.name" label="Name" />
             </div>

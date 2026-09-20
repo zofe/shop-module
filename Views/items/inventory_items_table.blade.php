@@ -17,15 +17,13 @@
         <table class="table">
             <thead>
             <tr>
-                <th>
-                   id
-                </th>
-                <th>serial_number</th>
-                <th>product</th>
-                <th>status</th>
-                <th>owner</th>
-                <th>created_at</th>
-                <th>updated_at</th>
+                <th>{{ __('Id') }}</th>
+                <th>{{ __('Serial number') }}</th>
+                <th>{{ __('product') }}</th>
+                <th>{{ __('status') }}</th>
+                <th>{{ __('owner') }}</th>
+                <th>{{ __('Created at') }}</th>
+                <th>{{ __('Updated at') }}</th>
             </tr>
             </thead>
             <tbody>

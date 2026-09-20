@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0] - 2026-09-21
+
+### Added
+
+- Languages: every text of the shop (admin and public pages, breadcrumbs, alerts) is a phrase through `__()`, links
+  and redirects use `route_lang()` so the language of the page is kept. Catalogues in `Lang/`: `it` reviewed, `es`,
+  `fr`, `de`, `pt_BR` machine-translated and listed for review in `Lang/.rpd-lang.json`. Phrases the core already
+  translates (Back, Save, Status…) are inherited. Requires rapyd-admin ^9.17.
+
 ## [1.0.0] - 2026-09-17
 
 The shop as it was redesigned in September 2026. Breaking with 0.12: two flows (orders and subscriptions), price

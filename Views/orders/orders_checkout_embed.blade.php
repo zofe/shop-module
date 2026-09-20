@@ -8,11 +8,11 @@
 
     @if($order->status === 'payment_verification')
         <div class="alert alert-success mb-3">
-            <i class="fas fa-check-circle me-1"></i> Your order is registered and awaiting payment confirmation.
+            <i class="fas fa-check-circle me-1"></i> {{ __('Your order is registered and awaiting payment confirmation.') }}
         </div>
     @elseif($order->status !== 'pending_payment')
         <div class="alert alert-warning mb-0">
-            This order is not awaiting payment (current status: <strong>{{ $order->status }}</strong>).
+            {{ __('This order is not awaiting payment') }} ({{ __('current status') }}: <strong>{{ $order->status }}</strong>).
         </div>
     @else
 
@@ -20,11 +20,11 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th>SKU</th>
-                    <th>Description</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Quantity</th>
-                    <th class="text-end">Subtotal</th>
+                    <th>{{ __('SKU') }}</th>
+                    <th>{{ __('Description') }}</th>
+                    <th class="text-end">{{ __('Price') }}</th>
+                    <th class="text-end">{{ __('Quantity') }}</th>
+                    <th class="text-end">{{ __('Subtotal') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -41,22 +41,22 @@
                 <tfoot>
                 <tr class="tr-small">
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Subtotal</td>
+                    <td class="text-end">{{ __('Subtotal') }}</td>
                     <td class="text-end">{{ $order->subtotal }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr class="tr-small">
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Shipping</td>
+                    <td class="text-end">{{ __('Shipping') }}</td>
                     <td class="text-end shipping">{{ $order->shipping }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr>
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Tax</td>
+                    <td class="text-end">{{ __('Tax') }}</td>
                     <td class="text-end tax">{{ $order->tax }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr>
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end h5"><strong>Total</strong></td>
+                    <td class="text-end h5"><strong>{{ __('Total') }}</strong></td>
                     <td class="text-end h5 total"><strong>{{ $order->total }} {{ Cart::currency() }}</strong></td>
                 </tr>
                 </tfoot>
@@ -86,7 +86,7 @@
             </x-rpd::card>
         @else
             <div class="alert alert-success mt-3 mb-0">
-                <i class="fas fa-check-circle me-1"></i> Your order is registered. We will contact you for the payment.
+                <i class="fas fa-check-circle me-1"></i> {{ __('Your order is registered. We will contact you for the payment.') }}
             </div>
         @endif
 

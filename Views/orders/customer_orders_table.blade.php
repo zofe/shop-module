@@ -3,11 +3,11 @@
     <table class="table">
         <thead>
         <tr>
-            <th>Order</th>
-            <th>Products</th>
-            <th>Status</th>
-            <th class="text-end">Total</th>
-            <th>Date</th>
+            <th>{{ __('Order') }}</th>
+            <th>{{ __('Products') }}</th>
+            <th>{{ __('Status') }}</th>
+            <th class="text-end">{{ __('Total') }}</th>
+            <th>{{ __('Date') }}</th>
             <th></th>
         </tr>
         </thead>

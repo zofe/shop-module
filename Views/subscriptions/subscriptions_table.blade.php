@@ -7,20 +7,20 @@
             <table class="table table-sm">
                 <thead>
                 <tr>
-                    <th class="text-uppercase">id</th>
-                    <th>description</th>
-                    <th>customer</th>
-                    <th>period</th>
-                    <th>status</th>
-                    <th>next billing</th>
-                    <th>collected by</th>
-                    <th class="text-end">fee</th>
+                    <th class="text-uppercase">{{ __('id') }}</th>
+                    <th>{{ __('description') }}</th>
+                    <th>{{ __('customer') }}</th>
+                    <th>{{ __('period') }}</th>
+                    <th>{{ __('status') }}</th>
+                    <th>{{ __('next billing') }}</th>
+                    <th>{{ __('collected by') }}</th>
+                    <th class="text-end">{{ __('fee') }}</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($items as $subscription)
                     <tr wire:key="s-{{ $subscription->id }}">
-                        <td><a href="{{ route('subscriptions.view', $subscription) }}">{{ $subscription->shortId }}</a></td>
+                        <td><a href="{{ route_lang('subscriptions.view', $subscription) }}">{{ $subscription->shortId }}</a></td>
                         <td>{{ $subscription->description }}</td>
                         <td>
                             @if($subscription->company){{ $subscription->company->business_name }}

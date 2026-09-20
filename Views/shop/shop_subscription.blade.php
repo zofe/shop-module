@@ -3,12 +3,12 @@
         <div class="col-md-4">
             <x-rpd::card title="Status">
                 <dl class="row mb-0">
-                    <dt class="col-5">Status</dt><dd class="col-7">{{ $subscription->status }}</dd>
-                    <dt class="col-5">Period</dt><dd class="col-7">{{ $subscription->period }}</dd>
-                    <dt class="col-5">Started</dt><dd class="col-7">{{ $subscription->start_date?->format('Y-m-d') }}</dd>
-                    @if($subscription->trial_ends_at)<dt class="col-5">Trial ends</dt><dd class="col-7">{{ $subscription->trial_ends_at->format('Y-m-d') }}</dd>@endif
-                    <dt class="col-5">Next billing</dt><dd class="col-7">{{ $subscription->next_billing_at?->format('Y-m-d') ?? '—' }}</dd>
-                    <dt class="col-5">Fee</dt><dd class="col-7">{{ number_format($subscription->total, 2) }} {{ Cart::currency() }} / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</dd>
+                    <dt class="col-5">{{ __('Status') }}</dt><dd class="col-7">{{ $subscription->status }}</dd>
+                    <dt class="col-5">{{ __('Period') }}</dt><dd class="col-7">{{ $subscription->period }}</dd>
+                    <dt class="col-5">{{ __('Started') }}</dt><dd class="col-7">{{ $subscription->start_date?->format('Y-m-d') }}</dd>
+                    @if($subscription->trial_ends_at)<dt class="col-5">{{ __('Trial ends') }}</dt><dd class="col-7">{{ $subscription->trial_ends_at->format('Y-m-d') }}</dd>@endif
+                    <dt class="col-5">{{ __('Next billing') }}</dt><dd class="col-7">{{ $subscription->next_billing_at?->format('Y-m-d') ?? '—' }}</dd>
+                    <dt class="col-5">{{ __('Fee') }}</dt><dd class="col-7">{{ number_format($subscription->total, 2) }} {{ Cart::currency() }} / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</dd>
                 </dl>
             </x-rpd::card>
         </div>
@@ -42,7 +42,7 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="text-muted small">We will contact you for the payment.</div>
+                        <div class="text-muted small">{{ __('We will contact you for the payment.') }}</div>
                     @endif
                 </x-rpd::card>
             @endif
@@ -52,7 +52,7 @@
                     @include('shop::includes.documents', ['subject' => $subscription])
                 </x-slot>
                 <table class="table table-sm">
-                    <thead><tr><th>SKU</th><th>Description</th><th class="text-end">Qty</th><th class="text-end">Fee</th></tr></thead>
+                    <thead><tr><th>{{ __('SKU') }}</th><th>{{ __('Description') }}</th><th class="text-end">{{ __('Qty') }}</th><th class="text-end">{{ __('Fee') }}</th></tr></thead>
                     <tbody>
                     @foreach($subscription->items as $item)
                         <tr wire:key="si-{{ $item->id }}" class="{{ $item->bundle_code ? 'text-muted small' : '' }}">
@@ -64,7 +64,7 @@
                     @endforeach
                     </tbody>
                     <tfoot>
-                    <tr><td colspan="3" class="text-end"><strong>Total / {{ $subscription->period === 'yearly' ? 'year' : 'month' }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>{{ __('Total') }} / {{ $subscription->period === 'yearly' ? __('year') : __('month') }}</strong></td><td class="text-end"><strong>{{ number_format($subscription->total, 2) }} {{ Cart::currency() }}</strong></td></tr>
                     </tfoot>
                 </table>
             </x-rpd::card>
@@ -72,10 +72,10 @@
             @if($hasRecorder)
                 <x-rpd::card title="Payments">
                     @if(count($payments) === 0)
-                        <div class="text-muted small">No payment yet.</div>
+                        <div class="text-muted small">{{ __('No payment yet.') }}</div>
                     @else
                         <table class="table table-sm">
-                            <thead><tr><th>Description</th><th>Status</th><th>Date</th><th class="text-end">Total</th></tr></thead>
+                            <thead><tr><th>{{ __('Description') }}</th><th>{{ __('Status') }}</th><th>{{ __('Date') }}</th><th class="text-end">{{ __('Total') }}</th></tr></thead>
                             <tbody>
                             @foreach($payments as $payment)
                                 <tr wire:key="p-{{ $payment->id }}">

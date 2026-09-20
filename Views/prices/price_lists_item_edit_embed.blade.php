@@ -1,7 +1,7 @@
 <div class="row py-1">
     @if($action == 'edit' || $action == 'create')
         @if($action == 'edit')
-            <div class="col-md-3 pt-3">product: {{ $item->name }}</div>
+            <div class="col-md-3 pt-3">{{ __('product:') }} {{ $item->name }}</div>
         @elseif($action == 'create')
             <x-rpd::select-list col="col-md-2" model="item.product_id" :options="$products" label="product" placeholder="Product..." />
             <x-rpd::select-list col="col-md-1" model="item.product_variant_id" :options="$this->variantsOf($item->product_id)" label="variant" placeholder="—" />
@@ -28,7 +28,7 @@
             </div>
             <div class="row mt-2">
                 <div class="col-md-12">
-                    <div class="small text-gray-500 mb-1">Service parameters (handed to the provisioning driver, e.g. devices: 5, hours: 2)</div>
+                    <div class="small text-gray-500 mb-1">{{ __('Service parameters (handed to the provisioning driver, e.g. devices: 5, hours: 2)') }}</div>
                     <x-rpd::metadata model="metadata" />
                 </div>
             </div>
@@ -41,16 +41,16 @@
         </div>
     @elseif($action == 'show')
         <div class="col-md-4">
-            <span class="small text-gray-500">product:</span>
+            <span class="small text-gray-500">{{ __('product:') }}</span>
             {{ $item->name }}
-            @if($item->product->isBundle())<span class="badge bg-secondary">bundle</span>@endif
+            @if($item->product->isBundle())<span class="badge bg-secondary">{{ __('bundle') }}</span>@endif
         </div>
         <div class="col-md-6 small">
-            @if($item->isPurchasable())<span class="me-3"><span class="text-gray-500">one-time</span> {{ number_format($item->price_onetime, 2) }} {{ Cart::currency() }}</span>@endif
+            @if($item->isPurchasable())<span class="me-3"><span class="text-gray-500">{{ __('one-time') }}</span> {{ number_format($item->price_onetime, 2) }} {{ Cart::currency() }}</span>@endif
             @foreach($item->fees() as $period => $fee)<span class="me-3"><span class="text-gray-500">{{ $period }}</span> {{ number_format($fee, 2) }} {{ Cart::currency() }}</span>@endforeach
-            @if($item->activationPrice())<span class="me-3"><span class="text-gray-500">activation</span> {{ number_format($item->activationPrice(), 2) }} {{ Cart::currency() }}</span>@endif
-            @if($item->trial_days)<span class="me-3"><span class="text-gray-500">trial</span> {{ $item->trial_days }} days</span>@endif
-            @if(! $item->isPurchasable() && ! $item->isSubscribable())<span class="text-muted">not on sale</span>@endif
+            @if($item->activationPrice())<span class="me-3"><span class="text-gray-500">{{ __('activation') }}</span> {{ number_format($item->activationPrice(), 2) }} {{ Cart::currency() }}</span>@endif
+            @if($item->trial_days)<span class="me-3"><span class="text-gray-500">{{ __('trial') }}</span> {{ $item->trial_days }} {{ __('days') }}</span>@endif
+            @if(! $item->isPurchasable() && ! $item->isSubscribable())<span class="text-muted">{{ __('not on sale') }}</span>@endif
             @if($item->metadata)
                 <div class="text-gray-500">@foreach($item->metadata as $k => $v){{ $k }}: {{ $v }}@if(! $loop->last), @endif @endforeach</div>
             @endif

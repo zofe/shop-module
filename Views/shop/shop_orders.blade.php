@@ -7,10 +7,10 @@
             <x-rpd::card title="Your orders">
                 @php $mine = \App\Modules\Shop\Models\Order::where('user_id', auth()->id()); @endphp
                 <dl class="row mb-0">
-                    <dt class="col-7">Orders</dt><dd class="col-5 text-end">{{ (clone $mine)->count() }}</dd>
-                    <dt class="col-7">Waiting for payment</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['pending_payment', 'payment_verification'])->count() }}</dd>
-                    <dt class="col-7">In progress</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['payment_done', 'in_process', 'shipped'])->count() }}</dd>
-                    <dt class="col-7">Completed</dt><dd class="col-5 text-end">{{ (clone $mine)->where('status', 'completed')->count() }}</dd>
+                    <dt class="col-7">{{ __('Orders') }}</dt><dd class="col-5 text-end">{{ (clone $mine)->count() }}</dd>
+                    <dt class="col-7">{{ __('Waiting for payment') }}</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['pending_payment', 'payment_verification'])->count() }}</dd>
+                    <dt class="col-7">{{ __('In progress') }}</dt><dd class="col-5 text-end">{{ (clone $mine)->whereIn('status', ['payment_done', 'in_process', 'shipped'])->count() }}</dd>
+                    <dt class="col-7">{{ __('Completed') }}</dt><dd class="col-5 text-end">{{ (clone $mine)->where('status', 'completed')->count() }}</dd>
                 </dl>
             </x-rpd::card>
 
@@ -41,8 +41,8 @@
                     <table class="table">
                         <thead>
                         <tr>
-                            <th>products</th>
-                            <th>status</th>
+                            <th>{{ __('products') }}</th>
+                            <th>{{ __('status') }}</th>
                             <th><x-rpd::sort model="created_at" label="created_at" /></th>
                         </tr>
                         </thead>

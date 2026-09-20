@@ -15,14 +15,14 @@
         <table class="table">
             <thead>
             <tr>
-                <th>id</th>
-                <th>service</th>
-                <th>status</th>
-                <th>owner</th>
-                <th>sold by</th>
-                <th>driver</th>
-                <th>licence</th>
-                <th>updated</th>
+                <th>{{ __('id') }}</th>
+                <th>{{ __('service') }}</th>
+                <th>{{ __('status') }}</th>
+                <th>{{ __('owner') }}</th>
+                <th>{{ __('sold by') }}</th>
+                <th>{{ __('driver') }}</th>
+                <th>{{ __('licence') }}</th>
+                <th>{{ __('updated') }}</th>
                 <th></th>
             </tr>
             </thead>

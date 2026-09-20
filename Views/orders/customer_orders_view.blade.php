@@ -5,11 +5,11 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th>SKU</th>
-                    <th>Description</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Subtotal</th>
+                    <th>{{ __('SKU') }}</th>
+                    <th>{{ __('Description') }}</th>
+                    <th class="text-end">{{ __('Price') }}</th>
+                    <th class="text-end">{{ __('Qty') }}</th>
+                    <th class="text-end">{{ __('Subtotal') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -26,22 +26,22 @@
                 <tfoot>
                 <tr class="tr-small">
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Subtotal</td>
+                    <td class="text-end">{{ __('Subtotal') }}</td>
                     <td class="text-end">{{ $order->subtotal }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr class="tr-small">
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Shipping</td>
+                    <td class="text-end">{{ __('Shipping') }}</td>
                     <td class="text-end">{{ $order->shipping }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr>
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end">Tax</td>
+                    <td class="text-end">{{ __('Tax') }}</td>
                     <td class="text-end">{{ $order->tax }} {{ Cart::currency() }}</td>
                 </tr>
                 <tr>
                     <td colspan="3">&nbsp;</td>
-                    <td class="text-end h5"><strong>Total</strong></td>
+                    <td class="text-end h5"><strong>{{ __('Total') }}</strong></td>
                     <td class="text-end h5 total"><strong>{{ $order->total }} {{ Cart::currency() }}</strong></td>
                 </tr>
                 </tfoot>
@@ -53,9 +53,9 @@
     <div class="col-md-4">
         <x-rpd::card title="Status">
             <dl class="row">
-                <dt class="col-4">Date</dt>
+                <dt class="col-4">{{ __('Date') }}</dt>
                 <dd class="col-8"><x-rpd::date-formatted :date="$order->created_at" /></dd>
-                <dt class="col-4">Status</dt>
+                <dt class="col-4">{{ __('Status') }}</dt>
                 <dd class="col-8">
                     <span class="badge bg-{{ match($order->status) {
                         'new' => 'secondary',
@@ -70,8 +70,8 @@
 
             @if($order->status === 'pending_payment')
                 <div class="mt-3">
-                    <a href="{{ route('orders.pay', $order) }}" class="btn btn-primary w-100">
-                        Pay now — {{ $order->total }} {{ Cart::currency() }}
+                    <a href="{{ route_lang('orders.pay', $order) }}" class="btn btn-primary w-100">
+                        {{ __('Pay now') }} — {{ $order->total }} {{ Cart::currency() }}
                     </a>
                 </div>
             @endif

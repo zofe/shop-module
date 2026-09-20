@@ -6,14 +6,14 @@
 
             <x-rpd::card title="Status">
                 <dl class="row">
-                    <dt class="col-4">Created at</dt>
+                    <dt class="col-4">{{ __('Created at') }}</dt>
                     <dd class="col-8"> <x-rpd::date-formatted :date="$order->created_at"></x-rpd::date-formatted></dd>
 
-                    <dt class="col-4">Status</dt>
+                    <dt class="col-4">{{ __('Status') }}</dt>
                     <dd class="col-8"> {{ $order->status }}</dd>
 
                     @if($order->shipped_at)
-                        <dt class="col-4">Shipped</dt>
+                        <dt class="col-4">{{ __('Shipped') }}</dt>
                         <dd class="col-8">
                             <x-rpd::date-formatted :date="$order->shipped_at"></x-rpd::date-formatted>
                             @if($order->carrier || $order->tracking_code || $order->shipping_document)
@@ -51,11 +51,11 @@
                     <table class="table">
                         <thead>
                         <tr>
-                            <th>SKU</th>
-                            <th>Description</th>
-                            <th class="text-end">Price</th>
-                            <th class="text-end">Quantity</th>
-                            <th class="text-end">Subtotal</th>
+                            <th>{{ __('SKU') }}</th>
+                            <th>{{ __('Description') }}</th>
+                            <th class="text-end">{{ __('Price') }}</th>
+                            <th class="text-end">{{ __('Quantity') }}</th>
+                            <th class="text-end">{{ __('Subtotal') }}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -72,12 +72,12 @@
                         <tfoot>
                         <tr class="tr-small">
                             <td colspan="3">&nbsp;</td>
-                            <td class="text-end">Subtotal</td>
+                            <td class="text-end">{{ __('Subtotal') }}</td>
                             <td class="text-end">{{ $order->subtotal }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr class="tr-small">
                             <td colspan="3">&nbsp;</td>
-                            <td class="text-end">Shipping</td>
+                            <td class="text-end">{{ __('Shipping') }}</td>
                             <td class="text-end shipping">{{ $order->shipping }} {{ Cart::currency() }}</td>
                         </tr>
                         <tr>
@@ -87,7 +87,7 @@
                         </tr>
                         <tr>
                             <td colspan="3">&nbsp;</td>
-                            <td class="text-end h5"><strong>Total</strong></td>
+                            <td class="text-end h5"><strong>{{ __('Total') }}</strong></td>
                             <td class="text-end h5 total"><strong>{{ $order->total }} {{ Cart::currency() }}</strong></td>
                         </tr>
                         </tfoot>
@@ -101,9 +101,9 @@
                     <table class="table">
                         <thead>
                         <tr>
-                            <th>product/service</th>
-                            <th style="text-transform: none;">serial number / licence</th>
-                            <th>status</th>
+                            <th>{{ __('product/service') }}</th>
+                            <th style="text-transform: none;">{{ __('serial number / licence') }}</th>
+                            <th>{{ __('status') }}</th>
                         </tr>
                         </thead>
                         <tbody>

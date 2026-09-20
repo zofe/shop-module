@@ -21,13 +21,13 @@
                     <x-rpd::sort model="id" label="id" />
                 </th>
                 <th></th>
-                <th>type</th>
-                <th>name</th>
-                <th>sku</th>
-                <th>variants</th>
-                <th>category</th>
-                <th>created_at</th>
-                <th>updated_at</th>
+                <th>{{ __('type') }}</th>
+                <th>{{ __('name') }}</th>
+                <th>{{ __('sku') }}</th>
+                <th>{{ __('variants') }}</th>
+                <th>{{ __('category') }}</th>
+                <th>{{ __('Created at') }}</th>
+                <th>{{ __('Updated at') }}</th>
             </tr>
             </thead>
             <tbody>

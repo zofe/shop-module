@@ -10,11 +10,11 @@
             <x-rpd::card>
                 <x-rpd::table title="My subscriptions" :items="$items">
                     <table class="table table-sm">
-                        <thead><tr><th>id</th><th>description</th><th>period</th><th>status</th><th>next billing</th><th class="text-end">fee</th></tr></thead>
+                        <thead><tr><th>{{ __('id') }}</th><th>{{ __('description') }}</th><th>{{ __('period') }}</th><th>{{ __('status') }}</th><th>{{ __('next billing') }}</th><th class="text-end">{{ __('fee') }}</th></tr></thead>
                         <tbody>
                         @foreach($items as $subscription)
                             <tr wire:key="s-{{ $subscription->id }}">
-                                <td><a href="{{ route('shop.subscription', $subscription) }}">{{ $subscription->shortId }}</a></td>
+                                <td><a href="{{ route_lang('shop.subscription', $subscription) }}">{{ $subscription->shortId }}</a></td>
                                 <td>{{ $subscription->description }}</td>
                                 <td>{{ $subscription->period }}</td>
                                 <td>{{ $subscription->status }}</td>

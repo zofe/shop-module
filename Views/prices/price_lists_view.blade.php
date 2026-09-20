@@ -24,7 +24,7 @@
         </x-slot>
 
         <div>
-            <h4>Pricelist : {{ $priceList->name }}</h4>
+            <h4>{{ __('Price list') }}: {{ $priceList->name }}</h4>
 
         </div>
 
